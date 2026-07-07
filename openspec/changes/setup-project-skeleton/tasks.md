@@ -3,7 +3,7 @@
 ## 1. 專案初始化
 
 - [x] 1.1 `create-next-app`：Next.js (App Router) + TypeScript + Tailwind CSS
-- [ ] 1.2 建立 GitHub repo 並推上初始 commit
+- [x] 1.2 建立 GitHub repo 並推上初始 commit
 
 ## 2. 資料庫
 
