@@ -1,0 +1,1 @@
+ALTER TABLE "lesson" ADD CONSTRAINT "lesson_type_check" CHECK ("lesson"."type" in ('concept', 'practice'));

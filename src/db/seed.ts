@@ -2,8 +2,10 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
+import { seedSkillTree } from "./seed-skill-tree";
 
 async function seed() {
+  await seedSkillTree();
   const email = process.env.DEMO_EMAIL!;
   const password = process.env.DEMO_PASSWORD!;
 
