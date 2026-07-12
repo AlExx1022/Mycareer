@@ -18,4 +18,4 @@
 
 ## 4. 驗收
 
-- [ ] 4.1 部署後在 production 以 demo 帳號呼叫 API，確認回傳完整技能樹
+- [x] 4.1 部署後在 production 以 demo 帳號呼叫 API，確認回傳完整技能樹
