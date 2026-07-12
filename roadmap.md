@@ -13,7 +13,7 @@
 
 ## Phase 1 — 技能樹與核心學習循環
 
-### C1 `skill-tree-data`
+### C1 `skill-tree-data` ✅（2026-07-12 完成）
 
 - **目標**：課綱成為資料，schema 通用不綁主題。
 - **範圍**：技能樹 schema（Unit / Lesson、節點型態、依賴關係、掌握度欄位，主題無關）、人工策展第一條路徑 React Junior → Mid（2 Unit、約 12 節點）、每節點的考點與過關 rubric（人工撰寫，檢核引擎以此為據）、seed script。
