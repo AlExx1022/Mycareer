@@ -4,7 +4,7 @@
 
 ## Phase 0 — 地基
 
-### C0 `setup-project-skeleton`
+### C0 `setup-project-skeleton` ✅（2026-07-12 完成）
 
 - **目標**：專案骨架上線。
 - **範圍**：Next.js (App Router + TS + Tailwind)、Drizzle + Postgres、Auth（含 demo 帳號機制的基礎）、Vercel 部署管線。

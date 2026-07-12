@@ -7,9 +7,9 @@
 
 ## 2. 資料庫
 
-- [ ] 2.1 建立 Neon Postgres（Vercel Marketplace 整合），設定本地與 Vercel 的 `DATABASE_URL`
+- [x] 2.1 建立 Neon Postgres（Vercel Marketplace 整合），設定本地與 Vercel 的 `DATABASE_URL`
 - [x] 2.2 安裝 Drizzle ORM + drizzle-kit，設定 `drizzle.config.ts` 與 migration scripts
-- [ ] 2.3 跑一次空 migration 驗證 generate → migrate 流程可用
+- [x] 2.3 跑一次空 migration 驗證 generate → migrate 流程可用
 
 ## 3. 認證
 
@@ -21,5 +21,5 @@
 ## 4. 首頁與部署
 
 - [x] 4.1 登入後空白首頁：顯示登入狀態 + 登出入口
-- [ ] 4.2 Vercel 連 GitHub repo，設定環境變數，main 自動部署
-- [ ] 4.3 驗收：公開網址完整走一遍 註冊 → 登出 → 登入 → demo 登入
+- [x] 4.2 Vercel 連 GitHub repo，設定環境變數，main 自動部署
+- [x] 4.3 驗收：公開網址完整走一遍 註冊 → 登出 → 登入 → demo 登入
