@@ -58,4 +58,4 @@ LangGraph `StateGraph` 定義 session 狀態機（節點：`teach` → `check` �
 
 ## Open Questions
 
-- 模型選擇（gateway 字串）先用 `anthropic/claude-sonnet-5` 之類單一模型，成本壓力大再降級 haiku——實作時定案即可，不阻塞。
+- ~~模型選擇~~ 已定案：`google/gemini-3-flash`（性價比與免費額度考量，見 notes）。gateway 架構下換模型只是改 `MODEL` 字串一行。

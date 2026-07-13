@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { RubricItem } from "@/db/schema";
 import type { CheckState, SessionPhase, StoredMessage } from "@/db/schema";
 
-export const MODEL = "anthropic/claude-sonnet-5";
+export const MODEL = "google/gemini-3-flash";
 
 export type LessonMeta = {
   id: string;
