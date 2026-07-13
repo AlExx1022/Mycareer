@@ -21,11 +21,11 @@
 
 ## 5. 課程頁 UI
 
-- [ ] 5.1 `lesson/[slug]/page.tsx` 概念型節點改為 streaming 對話 UI（`useChat`），保留考點區塊；practice 型節點維持 placeholder
-- [ ] 5.2 進頁時還原歷史對話與檢核進度；已過關節點顯示過關狀態
-- [ ] 5.3 超額（429）與錯誤狀態的 UI 呈現
+- [x] 5.1 `lesson/[slug]/page.tsx` 概念型節點改為 streaming 對話 UI（`useChat`），保留考點區塊；practice 型節點維持 placeholder
+- [x] 5.2 進頁時還原歷史對話與檢核進度；已過關節點顯示過關狀態
+- [x] 5.3 超額（429）與錯誤狀態的 UI 呈現
 
 ## 6. 驗收
 
-- [ ] 6.1 端到端驗證：完整上完一個概念型節點（如 closure），檢核通過 → 技能樹該節點亮燈、weakness_record 有失敗記錄、限額計數正確
-- [ ] 6.2 部署 Vercel 並在公開網址驗證 streaming 與限額
+- [x] 6.1 端到端驗證：完整上完一個概念型節點（如 closure），檢核通過 → 技能樹該節點亮燈、weakness_record 有失敗記錄、限額計數正確
+- [x] 6.2 部署 Vercel 並在公開網址驗證 streaming 與限額
