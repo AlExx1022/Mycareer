@@ -2,9 +2,12 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
+import type { UIMessage } from "ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { lesson } from "@/db/schema";
+import { loadSession } from "@/lib/lesson-session/store";
+import LessonChat from "./lesson-chat";
 
 export default async function LessonPage({
   params,
@@ -21,6 +24,17 @@ export default async function LessonPage({
   if (!found) {
     notFound();
   }
+
+  const chat =
+    found.type === "concept"
+      ? await loadSession(session.user.id, slug)
+      : null;
+  const initialMessages: UIMessage[] =
+    chat?.messages.map((m, i) => ({
+      id: `restored-${i}`,
+      role: m.role,
+      parts: [{ type: "text", text: m.content }],
+    })) ?? [];
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
@@ -39,9 +53,17 @@ export default async function LessonPage({
           <li key={p}>{p}</li>
         ))}
       </ul>
-      <p className="mt-10 rounded-lg border border-dashed border-[#17242D]/20 p-4 text-sm text-[#17242D]/55">
-        互動課程即將開通——AI 教學與檢核正在鋪軌中。
-      </p>
+      {chat ? (
+        <LessonChat
+          slug={slug}
+          initialMessages={initialMessages}
+          passed={chat.phase === "passed"}
+        />
+      ) : (
+        <p className="mt-10 rounded-lg border border-dashed border-[#17242D]/20 p-4 text-sm text-[#17242D]/55">
+          實作型節點即將開通——Sandpack 編輯器正在鋪軌中。
+        </p>
+      )}
     </main>
   );
 }
