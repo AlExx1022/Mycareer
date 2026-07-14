@@ -41,3 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .tokensave
+
+# 個人筆記與 plugin 生成文件
+notes
+vercel.md
