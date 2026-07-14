@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { lesson } from "@/db/schema";
 import { loadSession } from "@/lib/lesson-session/store";
 import LessonChat from "./lesson-chat";
+import PracticeSession from "./practice-session";
 
 export default async function LessonPage({
   params,
@@ -37,7 +38,11 @@ export default async function LessonPage({
     })) ?? [];
 
   return (
-    <main className="mx-auto min-h-screen max-w-2xl px-6 py-10">
+    <main
+      className={`mx-auto min-h-screen px-6 py-10 ${
+        found.type === "practice" ? "max-w-6xl" : "max-w-2xl"
+      }`}
+    >
       <Link href="/" className="text-sm text-[#17242D]/50 hover:text-[#17242D]">
         ← 回技能樹
       </Link>
@@ -60,9 +65,7 @@ export default async function LessonPage({
           passed={chat.phase === "passed"}
         />
       ) : (
-        <p className="mt-10 rounded-lg border border-dashed border-[#17242D]/20 p-4 text-sm text-[#17242D]/55">
-          實作型節點即將開通——Sandpack 編輯器正在鋪軌中。
-        </p>
+        <PracticeSession slug={slug} />
       )}
     </main>
   );
