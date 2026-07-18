@@ -1,6 +1,12 @@
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type UIMessage,
+} from "ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { lesson, userLessonMastery, weaknessRecord } from "@/db/schema";
@@ -13,6 +19,12 @@ import {
   MODEL,
   type LessonMeta,
 } from "@/lib/lesson-session/graph";
+import {
+  freshUnitsState,
+  generateUnitQuestions,
+  stripQuestion,
+  type QuestionData,
+} from "@/lib/lesson-session/units";
 import { loadSession, saveSession } from "@/lib/lesson-session/store";
 
 export const maxDuration = 300;
@@ -75,8 +87,43 @@ export async function POST(
   snapshot.messages.push({ role: "user", content: userText });
 
   let instructions: string;
-  if (snapshot.phase === "passed") {
-    instructions = "學生已通過本節點檢核，這是過關後的自由問答，直接回答問題。";
+  let questionData: QuestionData | null = null;
+
+  if (snapshot.phase === "units") {
+    if (!snapshot.unitsState) snapshot.unitsState = freshUnitsState(meta);
+    const us = snapshot.unitsState;
+    const unit = us.units[us.currentUnit];
+
+    if (unit.questions.length === 0) {
+      unit.questions = await generateUnitQuestions(
+        meta,
+        unit.examPoint,
+        us.currentUnit,
+      );
+      unit.results = unit.questions.map(() => ({
+        correct: false,
+        wrongOnce: false,
+      }));
+      unit.current = 0;
+      // 題目先落 DB，streaming 中斷也不用重新出題
+      await saveSession(userId, slug, snapshot);
+      instructions = `現在開始第 ${us.currentUnit + 1}/${us.units.length} 個小單元，考點：「${unit.examPoint}」。只講這個考點最核心的一件事，全文嚴格 150 字以內（含程式碼），程式碼範例最多三行、可以不給。結尾一句話預告接下來有 ${unit.questions.length} 題小練習。不要自己出題或提問，練習題由系統呈現。`;
+    } else {
+      instructions = `學生正在第 ${us.currentUnit + 1}/${us.units.length} 個小單元的練習中途傳訊息。簡短回應（100 字以內），鼓勵他繼續作答目前的題目。不要透露任何題目的答案。`;
+    }
+
+    questionData = {
+      question: stripQuestion(unit.questions[unit.current]),
+      progress: {
+        unit: us.currentUnit + 1,
+        totalUnits: us.units.length,
+        question: unit.current + 1,
+        totalQuestions: unit.questions.length,
+      },
+    };
+  } else if (snapshot.phase === "passed") {
+    instructions =
+      "學生已通過本節點檢核，這是過關後的自由問答，直接回答問題。";
   } else {
     const hint =
       snapshot.phase === "teach" ? "" : await nextLessonHint(userId, slug);
@@ -116,15 +163,26 @@ export async function POST(
     }
   }
 
-  const result = streamText({
-    model: MODEL,
-    system: systemPrompt(meta, instructions),
-    messages: await convertToModelMessages(messages),
-    onFinish: async ({ text }) => {
-      snapshot.messages.push({ role: "assistant", content: text });
-      await saveSession(userId, slug, snapshot);
-    },
+  const modelMessages = await convertToModelMessages(messages, {
+    ignoreIncompleteToolCalls: true,
   });
 
-  return result.toUIMessageStreamResponse();
+  const stream = createUIMessageStream({
+    execute: ({ writer }) => {
+      const result = streamText({
+        model: MODEL,
+        system: systemPrompt(meta, instructions),
+        messages: modelMessages,
+        onFinish: async ({ text }) => {
+          snapshot.messages.push({ role: "assistant", content: text });
+          await saveSession(userId, slug, snapshot);
+        },
+      });
+      writer.merge(result.toUIMessageStream());
+      if (questionData) {
+        writer.write({ type: "data-question", data: questionData });
+      }
+    },
+  });
+  return createUIMessageStreamResponse({ stream });
 }

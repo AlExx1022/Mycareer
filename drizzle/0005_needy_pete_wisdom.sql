@@ -1,0 +1,1 @@
+ALTER TABLE "lesson_session" ADD COLUMN "units_state" jsonb;

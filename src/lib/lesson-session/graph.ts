@@ -34,13 +34,14 @@ function pendingCriteria(state: SessionGraphState): RubricItem[] {
   );
 }
 
+// 單元練習全部完成後的收尾檢核開場（C4.5：教學已由小單元流程承擔）
 function teachNode(state: SessionGraphState) {
-  const points = state.lesson.examPoints.map((p) => `- ${p}`).join("\n");
+  const criteria = state.lesson.rubric.map((r) => `- ${r.criterion}`).join("\n");
   return {
     phase: "check" as const,
-    replyInstructions: `現在是教學階段。針對本節點考點教學：
-${points}
-一次只教一個最核心的觀念，其餘考點留到後續對話再展開，全文控制在 200 字以內、最多一個短程式碼範例。結尾提出一個一句話就能表達的蘇格拉底式檢核問題，讓學生用自己的話解釋核心概念。不要直接給答案。`,
+    replyInstructions: `學生剛完成本節點全部小單元練習，現在進入收尾檢核。檢核範圍：
+${criteria}
+先用一句話肯定他完成練習，然後提出一個一句話就能表達的蘇格拉底式檢核問題，讓學生用自己的話解釋核心概念。全文 100 字以內。不要直接給答案。`,
   };
 }
 

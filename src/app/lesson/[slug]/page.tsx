@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { lesson } from "@/db/schema";
 import { loadSession } from "@/lib/lesson-session/store";
+import { stripQuestion, type QuestionData } from "@/lib/lesson-session/units";
 import LessonChat from "./lesson-chat";
 import PracticeSession from "./practice-session";
 
@@ -37,6 +38,25 @@ export default async function LessonPage({
       parts: [{ type: "text", text: m.content }],
     })) ?? [];
 
+  // 續作時還原當前題目（剝除答案版）
+  let initialQuestion: QuestionData | null = null;
+  if (chat?.phase === "units" && chat.unitsState) {
+    const us = chat.unitsState;
+    const unit = us.units[us.currentUnit];
+    const q = unit?.questions[unit.current];
+    if (q) {
+      initialQuestion = {
+        question: stripQuestion(q),
+        progress: {
+          unit: us.currentUnit + 1,
+          totalUnits: us.units.length,
+          question: unit.current + 1,
+          totalQuestions: unit.questions.length,
+        },
+      };
+    }
+  }
+
   return (
     <main
       className={`mx-auto min-h-screen px-6 py-10 ${
@@ -63,6 +83,7 @@ export default async function LessonPage({
           slug={slug}
           initialMessages={initialMessages}
           passed={chat.phase === "passed"}
+          initialQuestion={initialQuestion}
         />
       ) : (
         <PracticeSession slug={slug} />

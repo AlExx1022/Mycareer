@@ -9,8 +9,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { lesson } from "./skill-tree-schema";
+import type { UnitsState } from "@/lib/lesson-session/units";
 
-export type SessionPhase = "teach" | "check" | "reteach" | "passed";
+export type SessionPhase = "units" | "teach" | "check" | "reteach" | "passed";
 
 export type StoredMessage = {
   role: "user" | "assistant";
@@ -37,6 +38,8 @@ export const lessonSession = pgTable(
     phase: text("phase").$type<SessionPhase>().notNull(),
     messages: jsonb("messages").$type<StoredMessage[]>().notNull(),
     checkState: jsonb("check_state").$type<CheckState>().notNull(),
+    // 小單元題目與進度（C4.5）；v1 舊 session 為 null
+    unitsState: jsonb("units_state").$type<UnitsState>(),
     updatedAt: timestamp("updated_at").notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.lessonId] })],

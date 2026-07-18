@@ -36,6 +36,13 @@
       "when": 1783999323162,
       "tag": "0004_aspiring_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784363424231,
+      "tag": "0005_needy_pete_wisdom",
+      "breakpoints": true
     }
   ]
 }
