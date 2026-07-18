@@ -116,6 +116,31 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
         className="relative"
         style={{ width: layout.width, height: layout.height }}
       >
+        {layout.topics.map((t) => {
+          const color = ROUTE_COLORS[t.unitIndex % ROUTE_COLORS.length];
+          return (
+            <div
+              key={`${t.unitIndex}-${t.topic}`}
+              className="absolute rounded-2xl"
+              style={{
+                left: t.x,
+                top: t.y,
+                width: t.width,
+                height: t.height,
+                background: `${color}0D`,
+              }}
+              aria-hidden
+            >
+              <span
+                className="absolute top-1.5 left-3 font-mono text-[10px] font-semibold"
+                style={{ color }}
+              >
+                {t.topic}
+              </span>
+            </div>
+          );
+        })}
+
         <svg
           className="absolute inset-0"
           width={layout.width}

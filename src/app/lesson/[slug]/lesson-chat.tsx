@@ -207,6 +207,14 @@ function MatchWidget({
   );
 }
 
+// 難度標籤由單元順序推導（考點已依難度遞進排序）：首=基礎、末=深入、中間=進階
+function unitLevel(unit: number, total: number): string | null {
+  if (total < 2) return null;
+  if (unit === 1) return "基礎";
+  if (unit === total && total >= 3) return "深入";
+  return "進階";
+}
+
 function QuestionCard({
   data,
   feedback,
@@ -219,10 +227,17 @@ function QuestionCard({
   busy: boolean;
 }) {
   const { question: q, progress: p } = data;
+  const level = unitLevel(p.unit, p.totalUnits);
   return (
     <div className="mt-6 rounded-lg border border-[#17242D]/15 p-4">
       <p className="font-mono text-xs text-[#17242D]/45">
-        單元 {p.unit}/{p.totalUnits} ・ 第 {p.question}/{p.totalQuestions} 題
+        單元 {p.unit}/{p.totalUnits}
+        {level && (
+          <span className="mx-1 rounded bg-[#17242D]/10 px-1.5 py-0.5">
+            {level}
+          </span>
+        )}
+        ・ 第 {p.question}/{p.totalQuestions} 題
       </p>
       <p className="mt-2 text-[15px] whitespace-pre-wrap">{q.prompt}</p>
       {q.type === "choice" && (

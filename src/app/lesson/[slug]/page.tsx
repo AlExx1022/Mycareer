@@ -68,16 +68,51 @@ export default async function LessonPage({
       </Link>
       <p className="mt-6 font-mono text-xs text-[#17242D]/45">
         {found.type === "concept" ? "概念節點" : "實作節點"}
+        {found.topic ? ` · ${found.topic}` : null}
       </p>
       <h1 className="mt-1 text-2xl font-bold">{found.title}</h1>
-      <h2 className="mt-8 text-sm font-semibold text-[#17242D]/70">
-        這一站的考點
-      </h2>
-      <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px]">
-        {found.examPoints.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
-      </ul>
+      {found.intro ? (
+        <section className="mt-6 space-y-4">
+          <p className="text-[17px] font-medium leading-relaxed">
+            {found.intro.hook}
+          </p>
+          <div>
+            <h2 className="text-sm font-semibold text-[#17242D]/70">
+              實際場景
+            </h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px]">
+              {found.intro.scenarios.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-[15px]">
+            <span className="font-semibold text-[#17242D]/70">學完你能：</span>
+            {found.intro.outcome}
+          </p>
+          <details className="text-sm text-[#17242D]/60">
+            <summary className="cursor-pointer font-semibold">
+              這一站的考點
+            </summary>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {found.examPoints.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          </details>
+        </section>
+      ) : (
+        <>
+          <h2 className="mt-8 text-sm font-semibold text-[#17242D]/70">
+            這一站的考點
+          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px]">
+            {found.examPoints.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        </>
+      )}
       {chat ? (
         <LessonChat
           slug={slug}

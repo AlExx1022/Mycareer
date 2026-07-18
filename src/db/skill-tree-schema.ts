@@ -16,6 +16,12 @@ export type RubricItem = {
   passCondition: string;
 };
 
+export type LessonIntro = {
+  hook: string;
+  scenarios: string[];
+  outcome: string;
+};
+
 // ponytail: slug 直接當 primary key，seed upsert 不用另查 id
 export const unit = pgTable("unit", {
   id: text("id").primaryKey(),
@@ -35,6 +41,9 @@ export const lesson = pgTable(
     position: integer("position").notNull(),
     examPoints: jsonb("exam_points").$type<string[]>().notNull(),
     rubric: jsonb("rubric").$type<RubricItem[]>().notNull(),
+    // C4.6：topic 供地圖聚群、intro 為概念節點課前導入；nullable 走 additive migration，必填由 seed selfcheck 把關
+    topic: text("topic"),
+    intro: jsonb("intro").$type<LessonIntro>(),
   },
   (table) => [
     index("lesson_unitId_idx").on(table.unitId),

@@ -11,6 +11,7 @@ export type SkillTreeLesson = {
   id: string;
   title: string;
   type: "concept" | "practice";
+  topic: string | null;
   dependsOn: string[];
   mastery: { score: number; assessedAt: Date } | null;
 };
@@ -53,6 +54,7 @@ export async function getSkillTreeForUser(
           id: l.id,
           title: l.title,
           type: l.type,
+          topic: l.topic,
           dependsOn: depsByLesson.get(l.id) ?? [],
           mastery: mastery
             ? { score: mastery.score, assessedAt: mastery.assessedAt }

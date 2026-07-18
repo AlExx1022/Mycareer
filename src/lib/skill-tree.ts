@@ -51,6 +51,8 @@ export const COL_W = 168;
 export const ROW_H = 104;
 export const BAND_GAP = 72;
 export const MAP_PAD = 48;
+// C4.6 topic 聚群：帶內加高度讓 strip 標籤不撞站碼
+export const TOPIC_H = 30;
 
 export type MapNode = {
   lesson: SkillTreeLesson;
@@ -62,10 +64,20 @@ export type MapNode = {
 
 export type MapEdge = { from: string; to: string };
 
+export type TopicStrip = {
+  unitIndex: number;
+  topic: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type SkillTreeLayout = {
   nodes: MapNode[];
   edges: MapEdge[];
   bands: { unitIndex: number; title: string; code: string; y: number; height: number }[];
+  topics: TopicStrip[];
   width: number;
   height: number;
 };
@@ -78,11 +90,13 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
 
   const nodes: MapNode[] = [];
   const bands: SkillTreeLayout["bands"] = [];
+  const topics: TopicStrip[] = [];
   let bandY = MAP_PAD;
 
   units.forEach((u, unitIndex) => {
     const lineCode = u.title.match(/[A-Za-z]/)?.[0]?.toUpperCase() ?? String.fromCharCode(82 + unitIndex);
     const rowsInCol = new Map<number, number>();
+    const unitNodes: MapNode[] = [];
     let maxRows = 1;
     let stationNo = 0;
 
@@ -92,16 +106,40 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
       rowsInCol.set(col, row + 1);
       maxRows = Math.max(maxRows, row + 1);
       stationNo += 1;
-      nodes.push({
+      const node = {
         lesson: l,
         unitIndex,
         code: `${lineCode}${String(stationNo).padStart(2, "0")}`,
         x: MAP_PAD + col * COL_W + COL_W / 2,
-        y: bandY + row * ROW_H + ROW_H / 2,
+        y: bandY + TOPIC_H + row * ROW_H + ROW_H / 2,
+      };
+      nodes.push(node);
+      unitNodes.push(node);
+    }
+
+    // topic 聚群 strip：包住同 topic 車站（含站碼與站名的留白）
+    const byTopic = new Map<string, MapNode[]>();
+    for (const n of unitNodes) {
+      const t = n.lesson.topic;
+      if (!t) continue;
+      const group = byTopic.get(t) ?? [];
+      group.push(n);
+      byTopic.set(t, group);
+    }
+    for (const [topic, ns] of byTopic) {
+      const xs = ns.map((n) => n.x);
+      const ys = ns.map((n) => n.y);
+      topics.push({
+        unitIndex,
+        topic,
+        x: Math.min(...xs) - 74,
+        y: Math.min(...ys) - 64,
+        width: Math.max(...xs) - Math.min(...xs) + 148,
+        height: Math.max(...ys) - Math.min(...ys) + 110,
       });
     }
 
-    const height = maxRows * ROW_H;
+    const height = TOPIC_H + maxRows * ROW_H;
     bands.push({ unitIndex, title: u.title, code: lineCode, y: bandY, height });
     bandY += height + BAND_GAP;
   });
@@ -114,6 +152,7 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
     nodes,
     edges,
     bands,
+    topics,
     width: MAP_PAD * 2 + (maxLayer + 1) * COL_W,
     height: bandY - BAND_GAP + MAP_PAD,
   };

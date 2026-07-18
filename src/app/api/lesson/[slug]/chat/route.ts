@@ -107,7 +107,11 @@ export async function POST(
       unit.current = 0;
       // 題目先落 DB，streaming 中斷也不用重新出題
       await saveSession(userId, slug, snapshot);
-      instructions = `現在開始第 ${us.currentUnit + 1}/${us.units.length} 個小單元，考點：「${unit.examPoint}」。只講這個考點最核心的一件事，全文嚴格 150 字以內（含程式碼），程式碼範例最多三行、可以不給。結尾一句話預告接下來有 ${unit.questions.length} 題小練習。不要自己出題或提問，練習題由系統呈現。`;
+      instructions = `現在開始第 ${us.currentUnit + 1}/${us.units.length} 個小單元，考點：「${unit.examPoint}」。依序講：是什麼（一句話定義）→ 為什麼（背後的原因或動機）→ 一個貼近開發情境的類比 → 程式碼例（TypeScript，8 行以內）。全文 200–400 字，分段呈現、不要編號標題。${
+        us.currentUnit === 0
+          ? "這是本節第一個單元，從直覺切入，程式碼例可省略。"
+          : "學生已完成前面單元，可直接往原理與常見誤解走，不要重複基礎。"
+      }結尾一句話預告接下來有 ${unit.questions.length} 題小練習。不要自己出題或提問，練習題由系統呈現。`;
     } else {
       instructions = `學生正在第 ${us.currentUnit + 1}/${us.units.length} 個小單元的練習中途傳訊息。簡短回應（100 字以內），鼓勵他繼續作答目前的題目。不要透露任何題目的答案。`;
     }

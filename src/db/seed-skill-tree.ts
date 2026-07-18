@@ -1,4 +1,4 @@
-import { inArray, sql } from "drizzle-orm";
+import { inArray, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { unit, lesson, lessonDependency } from "@/db/schema";
 import { curriculum } from "./curriculum/react-junior-mid";
@@ -57,6 +57,8 @@ export async function seedSkillTree() {
           position: lessonPos,
           examPoints: l.examPoints,
           rubric: l.rubric,
+          topic: l.topic,
+          intro: l.intro ?? null,
         })
         .onConflictDoUpdate({
           target: lesson.id,
@@ -67,13 +69,24 @@ export async function seedSkillTree() {
             position: lessonPos,
             examPoints: l.examPoints,
             rubric: l.rubric,
+            topic: l.topic,
+            intro: l.intro ?? null,
           },
         });
     }
   }
 
-  // 依賴整批重建，課綱移除的依賴才會消失
   const allLessons = curriculum.flatMap((u) => u.lessons);
+
+  // 課綱移除的節點整批清掉，FK 全 cascade——mastery/weakness/session 一併清除，不留孤兒資料
+  await db.delete(lesson).where(
+    notInArray(
+      lesson.id,
+      allLessons.map((l) => l.slug),
+    ),
+  );
+
+  // 依賴整批重建，課綱移除的依賴才會消失
   await db.delete(lessonDependency).where(
     inArray(
       lessonDependency.lessonId,
