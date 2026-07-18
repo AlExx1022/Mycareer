@@ -3,6 +3,20 @@
 ## Purpose
 TBD - created by archiving change lesson-session-core. Update Purpose after archive.
 ## Requirements
+### Requirement: 課程頁依節點型別分流
+
+課程頁 SHALL 依 lesson.type 分流：concept 節點呈現對話 session 介面，practice 節點呈現實作題介面（見 practice-session capability）。
+
+#### Scenario: 概念型節點
+
+- **WHEN** 使用者進入 type 為 concept 的節點課程頁
+- **THEN** 呈現既有的 streaming 對話學習循環
+
+#### Scenario: 實作型節點
+
+- **WHEN** 使用者進入 type 為 practice 的節點課程頁
+- **THEN** 呈現實作題介面（題目說明 + Sandpack 編輯器），不建立對話 session
+
 ### Requirement: 課程 session 狀態機
 
 系統 SHALL 以 LangGraph.js 狀態機驅動概念型節點的學習 session：教學 → 蘇格拉底檢核 → 答錯換角度再教 → 全部 rubric 通過後結束。檢核 SHALL 以該節點的 rubric（criterion 與 passCondition）為判定依據。

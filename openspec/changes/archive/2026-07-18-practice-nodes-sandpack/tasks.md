@@ -19,5 +19,5 @@
 ## 4. 驗證
 
 - [x] 4.1 出題/review 結構化輸出的 zod schema self-check（仿 `skill-tree.selfcheck.ts` 模式）
-- [ ] 4.2 手動驗收：完整走完一個實作型節點（寫 debounce 類題目）→ 測試瀏覽器內全過 → review 意見顯示 → 樹上亮燈、weakness 有記錄
+- [x] 4.2 手動驗收：完整走完一個實作型節點（寫 debounce 類題目）→ 測試瀏覽器內全過 → review 意見顯示 → 樹上亮燈、weakness 有記錄
 - [x] 4.3 驗證未登入 401、超額 429、client 偽造測試結果不寫掌握度
