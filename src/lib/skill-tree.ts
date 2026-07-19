@@ -49,15 +49,19 @@ export function topoLayers(lessons: SkillTreeLesson[]): Map<string, number> {
   return layers;
 }
 
-// C6.1 直立單線：手機 375px 含頁邊距不溢出
-export const MAP_W = 320;
-export const CENTER_X = 140;
-export const STEP_Y = 96;
-export const BAND_GAP = 56;
-// 頂部要容納第一條 Unit 帶標題（band.y - 34）
-export const MAP_PAD = 48;
+// C6.2 Duolingo 風蜿蜒路線：手機 375px 含頁邊距不溢出
+export const MAP_W = 340;
+export const CENTER_X = 150;
+export const STEP_Y = 120;
+export const BAND_GAP = 40;
+export const MAP_PAD = 12;
+// Unit 滿版彩色橫幅高度（含下方留白）
+export const BANNER_H = 76;
 // topic strip 頂部留白，strip 標籤不撞站點
-export const TOPIC_H = 30;
+export const TOPIC_H = 34;
+// 蜿蜒路徑：站點沿中線左右擺動
+const SNAKE = [0, -1, 0, 1];
+export const SNAKE_AMP = 24;
 
 export type MapNode = {
   lesson: SkillTreeLesson;
@@ -108,8 +112,8 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
       lesson: l,
       unitIndex,
       code: `${lineCode}${String(idx + 1).padStart(2, "0")}`,
-      x: CENTER_X,
-      y: bandY + TOPIC_H + idx * STEP_Y + STEP_Y / 2,
+      x: CENTER_X + SNAKE[idx % SNAKE.length] * SNAKE_AMP,
+      y: bandY + BANNER_H + TOPIC_H + idx * STEP_Y + STEP_Y / 2,
     }));
     nodes.push(...unitNodes);
 
@@ -127,14 +131,14 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
       topics.push({
         unitIndex,
         topic,
-        x: CENTER_X - 52,
-        y: Math.min(...ys) - 46,
-        width: MAP_W - (CENTER_X - 52) - 8,
-        height: Math.max(...ys) - Math.min(...ys) + 82,
+        x: CENTER_X - SNAKE_AMP - 56,
+        y: Math.min(...ys) - 54,
+        width: MAP_W - (CENTER_X - SNAKE_AMP - 56) - 4,
+        height: Math.max(...ys) - Math.min(...ys) + 100,
       });
     }
 
-    const height = TOPIC_H + ordered.length * STEP_Y;
+    const height = BANNER_H + TOPIC_H + ordered.length * STEP_Y;
     bands.push({ unitIndex, title: u.title, code: lineCode, y: bandY, height });
     bandY += height + BAND_GAP;
   });
