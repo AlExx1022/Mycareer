@@ -40,6 +40,9 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
     [layout],
   );
   const youAreHere = findYouAreHere(layout.nodes, states);
+  const crackedCount = allLessons.filter(
+    (l) => states.get(l.id) === "cracked",
+  ).length;
   const litKey = layout.nodes
     .filter((n) => states.get(n.lesson.id) === "lit")
     .map((n) => n.lesson.id)
@@ -111,6 +114,16 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
 
   return (
     <div className="overflow-x-auto pb-40">
+      {crackedCount > 0 && (
+        <Link
+          href="/review"
+          className="mb-4 inline-flex items-center gap-2 rounded-lg border border-[#E8590C]/30 bg-[#FFF4E6] px-4 py-2.5 text-sm font-medium text-[#17242D] hover:border-[#E8590C]/60"
+        >
+          <span aria-hidden>🧩</span>
+          {crackedCount} 個車站的記憶裂開了，去複習修好它
+          <span aria-hidden>→</span>
+        </Link>
+      )}
       <div
         ref={mapRef}
         className="relative"

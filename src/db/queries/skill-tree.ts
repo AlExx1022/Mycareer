@@ -6,6 +6,7 @@ import {
   lessonDependency,
   userLessonMastery,
 } from "@/db/schema";
+import { effectiveScore, isCracked } from "@/lib/mastery-decay";
 
 export type SkillTreeLesson = {
   id: string;
@@ -13,7 +14,12 @@ export type SkillTreeLesson = {
   type: "concept" | "practice";
   topic: string | null;
   dependsOn: string[];
-  mastery: { score: number; assessedAt: Date } | null;
+  mastery: {
+    score: number;
+    assessedAt: Date;
+    effective: number;
+    cracked: boolean;
+  } | null;
 };
 
 export type SkillTreeUnit = {
@@ -57,7 +63,14 @@ export async function getSkillTreeForUser(
           topic: l.topic,
           dependsOn: depsByLesson.get(l.id) ?? [],
           mastery: mastery
-            ? { score: mastery.score, assessedAt: mastery.assessedAt }
+            ? {
+                score: mastery.score,
+                assessedAt: mastery.assessedAt,
+                effective: Math.round(
+                  effectiveScore(mastery.score, mastery.assessedAt),
+                ),
+                cracked: isCracked(mastery.score, mastery.assessedAt),
+              }
             : null,
         };
       }),

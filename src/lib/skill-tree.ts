@@ -5,13 +5,13 @@ import type {
 
 export const MASTERY_THRESHOLD = 70;
 
-// cracked 的觸發條件由 C5 衰減機制定義，這裡先保留型別與樣式
 export type NodeState = "lit" | "locked" | "available" | "cracked";
 
 export function deriveNodeStates(
   lessons: SkillTreeLesson[],
 ): Map<string, NodeState> {
-  const litSet = new Set(
+  // 解鎖看 raw score（曾學會就算數）；cracked 只影響視覺與複習佇列，不鎖下游
+  const everLit = new Set(
     lessons
       .filter((l) => (l.mastery?.score ?? 0) >= MASTERY_THRESHOLD)
       .map((l) => l.id),
@@ -19,9 +19,11 @@ export function deriveNodeStates(
   return new Map(
     lessons.map((l) => [
       l.id,
-      litSet.has(l.id)
-        ? "lit"
-        : l.dependsOn.some((dep) => !litSet.has(dep))
+      everLit.has(l.id)
+        ? l.mastery?.cracked
+          ? "cracked"
+          : "lit"
+        : l.dependsOn.some((dep) => !everLit.has(dep))
           ? "locked"
           : "available",
     ]),

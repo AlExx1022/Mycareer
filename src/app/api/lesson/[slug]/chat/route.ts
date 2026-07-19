@@ -36,7 +36,15 @@ async function nextLessonHint(userId: string, currentId: string) {
     .flatMap((u) => u.lessons)
     .map((l) =>
       l.id === currentId
-        ? { ...l, mastery: { score: 100, assessedAt: new Date() } }
+        ? {
+            ...l,
+            mastery: {
+              score: 100,
+              assessedAt: new Date(),
+              effective: 100,
+              cracked: false,
+            },
+          }
         : l,
     );
   const states = deriveNodeStates(lessons);

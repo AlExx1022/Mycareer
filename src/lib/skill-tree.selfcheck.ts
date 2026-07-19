@@ -8,13 +8,17 @@ const L = (
   id: string,
   dependsOn: string[],
   score?: number,
+  cracked = false,
 ): SkillTreeLesson => ({
   id,
   title: id,
   type: "concept",
   topic: null,
   dependsOn,
-  mastery: score === undefined ? null : { score, assessedAt: new Date() },
+  mastery:
+    score === undefined
+      ? null
+      : { score, assessedAt: new Date(), effective: score, cracked },
 });
 
 // a(lit) → b(可學) → c(鎖)；d 依賴 a 且達標 → lit
@@ -24,6 +28,11 @@ assert.equal(states.get("a"), "lit");
 assert.equal(states.get("b"), "available");
 assert.equal(states.get("c"), "locked");
 assert.equal(states.get("d"), "available"); // 69 < 門檻，未亮但前置已達
+
+// C5：裂開節點顯示 cracked，但不鎖下游（解鎖看 raw score）
+const crackedStates = deriveNodeStates([L("a", [], 100, true), L("b", ["a"])]);
+assert.equal(crackedStates.get("a"), "cracked");
+assert.equal(crackedStates.get("b"), "available");
 
 const layers = topoLayers(lessons);
 assert.deepEqual(

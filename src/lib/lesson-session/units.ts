@@ -150,6 +150,16 @@ function convert(
     .filter((q): q is UnitQuestion => q !== null);
 }
 
+// 出題機械規則（單元出題與複習出題共用）
+export const QUESTION_RULES = `規則：
+- 出 3-5 題，題型混用選擇（choice）、填空（fill）、配對（match）、問答（free），至少三種題型，問答最多一題、放最後。
+- 由易到難，每題只考一個小概念，題幹一兩句話就好，不要長篇情境。
+- 內容適合讀程式碼的話，至少一題是讀碼/補碼題：題幹放一小段 TypeScript（反引號標記），用 choice 問輸出／行為，或用 fill 補上挖空的關鍵字。
+- 每題只填該題型需要的欄位，其他欄位一律給空陣列（answer 給 0）。
+- match 的 lefts 與 rights 依序一一對應（顯示時系統會打亂）。
+- explanation 一兩句講清楚為什麼；wrongSummary 一句話描述答錯代表的誤解。
+- 全部繁體中文，語氣輕鬆。`;
+
 async function generate(lesson: LessonMeta, examPoint: string) {
   const { object } = await generateObject({
     model: MODEL,
@@ -159,14 +169,7 @@ async function generate(lesson: LessonMeta, examPoint: string) {
 
 ${examPoint}
 
-規則：
-- 出 3-5 題，題型混用選擇（choice）、填空（fill）、配對（match）、問答（free），至少三種題型，問答最多一題、放最後。
-- 由易到難，每題只考一個小概念，題幹一兩句話就好，不要長篇情境。
-- 這個考點適合讀程式碼的話，至少一題是讀碼/補碼題：題幹放一小段 TypeScript（反引號標記），用 choice 問輸出／行為，或用 fill 補上挖空的關鍵字。
-- 每題只填該題型需要的欄位，其他欄位一律給空陣列（answer 給 0）。
-- match 的 lefts 與 rights 依序一一對應（顯示時系統會打亂）。
-- explanation 一兩句講清楚為什麼；wrongSummary 一句話描述答錯代表的誤解。
-- 全部繁體中文，語氣輕鬆。`,
+${QUESTION_RULES}`,
   });
   return object;
 }
