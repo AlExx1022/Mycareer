@@ -23,4 +23,4 @@
 ## 5. 驗證
 
 - [x] 5.1 selfcheck / API 層驗證：decay selfcheck、技能樹 API 含 effective/cracked、複習出題含 sourceWeaknessIds 且 payload 無正解、完成回寫分數公式、偽造完成被拒
-- [ ] 5.2 瀏覽器手動驗收（使用者執行）：改舊 assessedAt 讓節點裂開 → 地圖見裂開樣式與複習提示 → `/review` 佇列含弱點摘要 → 複習 session 出題打向弱點 → 完成後節點復亮
+- [x] 5.2 瀏覽器手動驗收（使用者執行）：改舊 assessedAt 讓節點裂開 → 地圖見裂開樣式與複習提示 → `/review` 佇列含弱點摘要 → 複習 session 出題打向弱點 → 完成後節點復亮
