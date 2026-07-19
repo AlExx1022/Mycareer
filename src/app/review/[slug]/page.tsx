@@ -41,11 +41,11 @@ export default async function ReviewLessonPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F7F6] text-[#17242D]">
+    <main className="min-h-screen">
       <div className="mx-auto max-w-2xl px-6 py-8">
         <Link
           href="/review"
-          className="text-sm text-[#17242D]/55 hover:underline"
+          className="text-sm text-[#17242D]/55 hover:text-[#17242D]"
         >
           ← 回複習佇列
         </Link>

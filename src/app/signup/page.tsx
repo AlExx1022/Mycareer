@@ -34,17 +34,23 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-bold">註冊</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <main className="flex min-h-screen items-center justify-center px-6 py-10">
+      <div className="w-full max-w-sm">
+        <p className="font-mono text-xs font-semibold tracking-wide text-[#0B7285]">
+          ● 起點站
+        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">註冊</h1>
+        <p className="mt-2 text-[15px] text-[#17242D]/60">
+          註冊後從路線第一站出發。
+        </p>
+        <form onSubmit={handleSubmit} className="mt-8 space-y-3">
           <input
             type="email"
             required
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-lg border border-[#17242D]/20 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#17242D]/50"
           />
           <input
             type="password"
@@ -53,20 +59,24 @@ export default function SignupPage() {
             placeholder="密碼（至少 8 碼）"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-lg border border-[#17242D]/20 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#17242D]/50"
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+            className="w-full rounded-lg bg-[#17242D] py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
-            註冊
+            {loading ? "註冊中⋯" : "註冊"}
           </button>
         </form>
-        <p className="text-sm">
+        <p className="mt-6 text-sm text-[#17242D]/60">
           已有帳號？{" "}
-          <Link href="/login" className="underline">
+          <Link href="/login" className="font-medium text-[#17242D] underline">
             登入
           </Link>
         </p>

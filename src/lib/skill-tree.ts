@@ -49,11 +49,14 @@ export function topoLayers(lessons: SkillTreeLesson[]): Map<string, number> {
   return layers;
 }
 
-export const COL_W = 168;
-export const ROW_H = 104;
-export const BAND_GAP = 72;
+// C6.1 直立單線：手機 375px 含頁邊距不溢出
+export const MAP_W = 320;
+export const CENTER_X = 140;
+export const STEP_Y = 96;
+export const BAND_GAP = 56;
+// 頂部要容納第一條 Unit 帶標題（band.y - 34）
 export const MAP_PAD = 48;
-// C4.6 topic 聚群：帶內加高度讓 strip 標籤不撞站碼
+// topic strip 頂部留白，strip 標籤不撞站點
 export const TOPIC_H = 30;
 
 export type MapNode = {
@@ -84,11 +87,10 @@ export type SkillTreeLayout = {
   height: number;
 };
 
-// 捷運路線圖佈局：column = 全圖拓撲層（跨 Unit 依賴共用時間軸），每個 Unit 一條水平帶
+// 直立捷運路線圖：單線縱列，站點沿中央路線由上往下（拓撲層為主、position 為輔），每個 Unit 一段縱帶
 export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
   const allLessons = units.flatMap((u) => u.lessons);
   const layers = topoLayers(allLessons);
-  const maxLayer = Math.max(...layers.values(), 0);
 
   const nodes: MapNode[] = [];
   const bands: SkillTreeLayout["bands"] = [];
@@ -97,29 +99,21 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
 
   units.forEach((u, unitIndex) => {
     const lineCode = u.title.match(/[A-Za-z]/)?.[0]?.toUpperCase() ?? String.fromCharCode(82 + unitIndex);
-    const rowsInCol = new Map<number, number>();
-    const unitNodes: MapNode[] = [];
-    let maxRows = 1;
-    let stationNo = 0;
+    const ordered = u.lessons
+      .map((l, i) => ({ l, i }))
+      .sort((a, b) => layers.get(a.l.id)! - layers.get(b.l.id)! || a.i - b.i)
+      .map(({ l }) => l);
 
-    for (const l of u.lessons) {
-      const col = layers.get(l.id)!;
-      const row = rowsInCol.get(col) ?? 0;
-      rowsInCol.set(col, row + 1);
-      maxRows = Math.max(maxRows, row + 1);
-      stationNo += 1;
-      const node = {
-        lesson: l,
-        unitIndex,
-        code: `${lineCode}${String(stationNo).padStart(2, "0")}`,
-        x: MAP_PAD + col * COL_W + COL_W / 2,
-        y: bandY + TOPIC_H + row * ROW_H + ROW_H / 2,
-      };
-      nodes.push(node);
-      unitNodes.push(node);
-    }
+    const unitNodes: MapNode[] = ordered.map((l, idx) => ({
+      lesson: l,
+      unitIndex,
+      code: `${lineCode}${String(idx + 1).padStart(2, "0")}`,
+      x: CENTER_X,
+      y: bandY + TOPIC_H + idx * STEP_Y + STEP_Y / 2,
+    }));
+    nodes.push(...unitNodes);
 
-    // topic 聚群 strip：包住同 topic 車站（含站碼與站名的留白）
+    // topic 聚群 strip：縱向包絡（蓋住站圓與右側站名）
     const byTopic = new Map<string, MapNode[]>();
     for (const n of unitNodes) {
       const t = n.lesson.topic;
@@ -129,19 +123,18 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
       byTopic.set(t, group);
     }
     for (const [topic, ns] of byTopic) {
-      const xs = ns.map((n) => n.x);
       const ys = ns.map((n) => n.y);
       topics.push({
         unitIndex,
         topic,
-        x: Math.min(...xs) - 74,
-        y: Math.min(...ys) - 64,
-        width: Math.max(...xs) - Math.min(...xs) + 148,
-        height: Math.max(...ys) - Math.min(...ys) + 110,
+        x: CENTER_X - 52,
+        y: Math.min(...ys) - 46,
+        width: MAP_W - (CENTER_X - 52) - 8,
+        height: Math.max(...ys) - Math.min(...ys) + 82,
       });
     }
 
-    const height = TOPIC_H + maxRows * ROW_H;
+    const height = TOPIC_H + ordered.length * STEP_Y;
     bands.push({ unitIndex, title: u.title, code: lineCode, y: bandY, height });
     bandY += height + BAND_GAP;
   });
@@ -155,7 +148,7 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
     edges,
     bands,
     topics,
-    width: MAP_PAD * 2 + (maxLayer + 1) * COL_W,
+    width: MAP_W,
     height: bandY - BAND_GAP + MAP_PAD,
   };
 }

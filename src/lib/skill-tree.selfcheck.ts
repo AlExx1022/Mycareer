@@ -1,7 +1,13 @@
 // 最小 self-check：npx tsx src/lib/skill-tree.selfcheck.ts
 import assert from "node:assert";
 import { curriculum } from "@/db/curriculum/react-junior-mid";
-import { deriveNodeStates, topoLayers } from "./skill-tree";
+import {
+  CENTER_X,
+  MAP_W,
+  deriveNodeStates,
+  layoutSkillTree,
+  topoLayers,
+} from "./skill-tree";
 import type { SkillTreeLesson } from "@/db/queries/skill-tree";
 
 const L = (
@@ -28,6 +34,17 @@ assert.equal(states.get("a"), "lit");
 assert.equal(states.get("b"), "available");
 assert.equal(states.get("c"), "locked");
 assert.equal(states.get("d"), "available"); // 69 < 門檻，未亮但前置已達
+
+// C6.1 直立單線：全站落在中央路線上、y 由上往下遞增、寬固定 MAP_W
+const layout = layoutSkillTree([{ id: "u1", title: "React 基礎", lessons }]);
+assert.equal(layout.width, MAP_W);
+assert.ok(layout.nodes.every((n) => n.x === CENTER_X));
+for (let i = 1; i < layout.nodes.length; i++) {
+  assert.ok(layout.nodes[i].y > layout.nodes[i - 1].y, "站點 y 應遞增");
+}
+// 依賴（a→b→c）在縱列中排前面：a 的 y 最小
+const yOf = (id: string) => layout.nodes.find((n) => n.lesson.id === id)!.y;
+assert.ok(yOf("a") < yOf("b") && yOf("b") < yOf("c"));
 
 // C5：裂開節點顯示 cracked，但不鎖下游（解鎖看 raw score）
 const crackedStates = deriveNodeStates([L("a", [], 100, true), L("b", ["a"])]);

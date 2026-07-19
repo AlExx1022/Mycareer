@@ -59,11 +59,11 @@ export default async function LessonPage({
 
   return (
     <main
-      className={`mx-auto min-h-screen px-6 py-10 ${
+      className={`mx-auto min-h-screen px-6 py-8 ${
         found.type === "practice" ? "max-w-6xl" : "max-w-2xl"
       }`}
     >
-      <Link href="/" className="text-sm text-[#17242D]/50 hover:text-[#17242D]">
+      <Link href="/" className="text-sm text-[#17242D]/55 hover:text-[#17242D]">
         ← 回技能樹
       </Link>
       <p className="mt-6 font-mono text-xs text-[#17242D]/45">

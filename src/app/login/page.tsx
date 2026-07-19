@@ -27,17 +27,23 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-bold">登入</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <main className="flex min-h-screen items-center justify-center px-6 py-10">
+      <div className="w-full max-w-sm">
+        <p className="font-mono text-xs font-semibold tracking-wide text-[#0B7285]">
+          ● 起點站
+        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">React 技能樹</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#17242D]/60">
+          一張會記得你的學習路線圖——哪裡不熟、哪裡該複習，它都記得。
+        </p>
+        <form onSubmit={handleSubmit} className="mt-8 space-y-3">
           <input
             type="email"
             required
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-lg border border-[#17242D]/20 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#17242D]/50"
           />
           <input
             type="password"
@@ -45,28 +51,32 @@ export default function LoginPage() {
             placeholder="密碼"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-lg border border-[#17242D]/20 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#17242D]/50"
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+            className="w-full rounded-lg bg-[#17242D] py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
-            登入
+            {loading ? "登入中⋯" : "登入"}
           </button>
         </form>
-        <form action={demoLogin}>
+        <form action={demoLogin} className="mt-3">
           <button
             type="submit"
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-lg border border-[#17242D]/20 py-3 text-sm font-medium hover:bg-[#17242D]/5"
           >
-            Demo 登入
+            用 Demo 帳號逛逛
           </button>
         </form>
-        <p className="text-sm">
+        <p className="mt-6 text-sm text-[#17242D]/60">
           沒有帳號？{" "}
-          <Link href="/signup" className="underline">
+          <Link href="/signup" className="font-medium text-[#17242D] underline">
             註冊
           </Link>
         </p>

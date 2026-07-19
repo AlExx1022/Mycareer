@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* light-only：作品集階段定調（design D1），要 dark 時全站 token 化一次做對 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7f6;
+  --foreground: #17242d;
 }
 
 @theme inline {
@@ -12,15 +13,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

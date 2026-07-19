@@ -6,11 +6,10 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { SkillTreeUnit } from "@/db/queries/skill-tree";
 import {
+  STEP_Y,
   deriveNodeStates,
   layoutSkillTree,
   findYouAreHere,
-  type MapNode,
-  type NodeState,
 } from "@/lib/skill-tree";
 import { markLessonKnown, unmarkLessonKnown } from "./lesson-actions";
 
@@ -20,10 +19,13 @@ const ROUTE_COLORS = ["#0B7285", "#6741D9", "#C2255C", "#E8590C"];
 const LOCKED = "#A6ADB4";
 const R = 22; // 車站半徑
 
+// 直立路線：相鄰站直線、跨站/轉乘向左彎出（站名都在右側）
 function edgePath(x1: number, y1: number, x2: number, y2: number) {
-  if (y1 === y2) return `M ${x1 + R} ${y1} L ${x2 - R} ${y2}`;
-  const midX = (x1 + x2) / 2;
-  return `M ${x1 + R} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2 - R} ${y2}`;
+  if (x1 === x2 && y2 - y1 <= STEP_Y) {
+    return `M ${x1} ${y1 + R} L ${x2} ${y2 - R}`;
+  }
+  const bow = Math.min(72, 32 + (y2 - y1) / 24);
+  return `M ${x1} ${y1 + R} C ${x1 - bow} ${y1 + 40}, ${x2 - bow} ${y2 - 40}, ${x2} ${y2 - R}`;
 }
 
 export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
@@ -113,11 +115,11 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
   }
 
   return (
-    <div className="overflow-x-auto pb-40">
+    <div className="pb-40">
       {crackedCount > 0 && (
         <Link
           href="/review"
-          className="mb-4 inline-flex items-center gap-2 rounded-lg border border-[#E8590C]/30 bg-[#FFF4E6] px-4 py-2.5 text-sm font-medium text-[#17242D] hover:border-[#E8590C]/60"
+          className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-lg border border-[#E8590C]/30 bg-[#FFF4E6] px-4 py-2.5 text-sm font-medium text-[#17242D] hover:border-[#E8590C]/60"
         >
           <span aria-hidden>🧩</span>
           {crackedCount} 個車站的記憶裂開了，去複習修好它
@@ -126,7 +128,7 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
       )}
       <div
         ref={mapRef}
-        className="relative"
+        className="relative mx-auto"
         style={{ width: layout.width, height: layout.height }}
       >
         {layout.topics.map((t) => {
@@ -209,13 +211,10 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
               type="button"
               data-id={n.lesson.id}
               onClick={() => setSelectedId(n.lesson.id)}
-              className="station group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F0A202]"
+              className="station group absolute flex -translate-x-1/2 -translate-y-1/2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F0A202]"
               style={{ left: n.x, top: n.y }}
               aria-label={`${n.code} ${n.lesson.title}`}
             >
-              <span className="mb-1 font-mono text-[10px] tracking-wide text-[#17242D]/45">
-                {n.code}
-              </span>
               <span
                 className={`flex h-11 w-11 items-center justify-center border-[3px] transition-transform duration-150 group-hover:scale-110 ${
                   practice ? "rounded-xl" : "rounded-full"
@@ -251,11 +250,16 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
                   </svg>
                 )}
               </span>
-              <span className="mt-1.5 w-32 text-center text-[13px] leading-tight font-medium text-[#17242D]">
-                {n.lesson.title}
+              <span className="absolute top-1/2 left-[52px] w-[124px] -translate-y-1/2 text-left">
+                <span className="block font-mono text-[10px] tracking-wide text-[#17242D]/45">
+                  {n.code}
+                </span>
+                <span className="mt-0.5 block text-[13px] leading-tight font-medium text-[#17242D]">
+                  {n.lesson.title}
+                </span>
               </span>
               {n.lesson.id === youAreHere && (
-                <span className="you-are-here absolute -top-9 rounded-md bg-[#F0A202] px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-[#17242D] shadow-sm after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-[#F0A202]">
+                <span className="you-are-here absolute -top-9 left-1/2 -translate-x-1/2 rounded-md bg-[#F0A202] px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-[#17242D] shadow-sm after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-[#F0A202]">
                   你在這裡
                 </span>
               )}
