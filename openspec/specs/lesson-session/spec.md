@@ -17,9 +17,23 @@ TBD - created by archiving change lesson-session-core. Update Purpose after arch
 - **WHEN** 使用者進入 type 為 practice 的節點課程頁
 - **THEN** 呈現實作題介面（題目說明 + Sandpack 編輯器），不建立對話 session
 
+### Requirement: 課前導入
+
+概念型節點的課程頁 SHALL 在課程開始前渲染該節點的人工策展導入內容：為什麼學（hook）、實際應用場景（scenarios）、學完能做什麼（outcome），內容來自課綱資料、不經 LLM、不計額度；考點列表降為輔助資訊。
+
+#### Scenario: 進入節點看到導入
+
+- **WHEN** 使用者進入概念型節點課程頁
+- **THEN** 在開始上課前看到 hook／場景／成果三段固定版型的導入內容，無 LLM 呼叫
+
+#### Scenario: 導入後開始上課
+
+- **WHEN** 使用者於導入畫面開始課程
+- **THEN** 直接進入第一個小單元的教學，不重複導入內容
+
 ### Requirement: 小單元制學習流程
 
-概念型節點的學習流程 SHALL 以考點為單位拆成小單元：每單元依序為「短教學 → 3–5 題互動題 → 單元完成回饋」，介面呈現單元進度；全部單元完成後進入 rubric 檢核收尾。單元教學訊息 SHALL 輕量（150 字內），互動題 SHALL 一次只呈現一題，答對才推進下一題。
+概念型節點的學習流程 SHALL 以考點為單位拆成小單元：每單元依序為「教學 → 3–5 題互動題 → 單元完成回饋」，介面呈現單元進度與難度標籤（基礎／進階／深入，由單元順序推導）；全部單元完成後進入 rubric 檢核收尾。單元教學訊息 SHALL 為 200–400 字的結構化教學（是什麼 → 為什麼 → 類比 → 程式碼例，基礎層可不含程式碼），互動題 SHALL 一次只呈現一題，答對才推進下一題。
 
 #### Scenario: 一次一題
 
@@ -35,6 +49,11 @@ TBD - created by archiving change lesson-session-core. Update Purpose after arch
 
 - **WHEN** 使用者離開課程頁後再次進入同一節點
 - **THEN** 還原單元進度、已生成題目與作答結果，從中斷處繼續，不重新出題
+
+#### Scenario: 難度遞進呈現
+
+- **WHEN** 使用者依序經過節點內各單元
+- **THEN** 各單元依考點排序由淺入深，單元教學開頭可見對應難度標籤
 
 ### Requirement: 混合題型出題
 
