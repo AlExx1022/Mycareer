@@ -62,6 +62,8 @@ export const TOPIC_H = 34;
 // 蜿蜒路徑：站點沿中線左右擺動
 const SNAKE = [0, -1, 0, 1];
 export const SNAKE_AMP = 24;
+// 左側分支廊道數上限，再多會畫到畫布外
+export const BRANCH_LANES = 3;
 
 export type MapNode = {
   lesson: SkillTreeLesson;
@@ -71,7 +73,8 @@ export type MapNode = {
   y: number;
 };
 
-export type MapEdge = { from: string; to: string };
+// lane 0 = 相鄰站直連；1 起為左側分支廊道編號，同時經過同一段的分支各佔一條廊道不重疊
+export type MapEdge = { from: string; to: string; lane: number };
 
 export type TopicStrip = {
   unitIndex: number;
@@ -131,9 +134,9 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
       topics.push({
         unitIndex,
         topic,
-        x: CENTER_X - SNAKE_AMP - 56,
+        x: 0,
         y: Math.min(...ys) - 54,
-        width: MAP_W - (CENTER_X - SNAKE_AMP - 56) - 4,
+        width: MAP_W,
         height: Math.max(...ys) - Math.min(...ys) + 100,
       });
     }
@@ -143,9 +146,28 @@ export function layoutSkillTree(units: SkillTreeUnit[]): SkillTreeLayout {
     bandY += height + BAND_GAP;
   });
 
-  const edges: MapEdge[] = allLessons.flatMap((l) =>
-    l.dependsOn.map((dep) => ({ from: dep, to: l.id })),
-  );
+  // 分支廊道分配：由上往下掃，每條廊道記住已佔用到的 y，重疊時才往左開新廊道
+  const nodeY = new Map(nodes.map((n) => [n.lesson.id, n.y]));
+  const laneEnd: number[] = [];
+  const edges: MapEdge[] = allLessons
+    .flatMap((l) => l.dependsOn.map((dep) => ({ from: dep, to: l.id })))
+    .filter((e) => nodeY.has(e.from) && nodeY.has(e.to))
+    .sort((a, b) => nodeY.get(a.from)! - nodeY.get(b.from)!)
+    .map((e) => {
+      const y1 = nodeY.get(e.from)!;
+      const y2 = nodeY.get(e.to)!;
+      if (y2 - y1 <= STEP_Y) return { ...e, lane: 0 };
+      const free = laneEnd.findIndex((end) => end <= y1);
+      const lane =
+        free !== -1
+          ? free
+          : laneEnd.length < BRANCH_LANES
+            ? laneEnd.length
+            : // 廊道用完就併回最快空出來的那條，寧可重疊也不畫出畫布外
+              laneEnd.indexOf(Math.min(...laneEnd));
+      laneEnd[lane] = Math.max(laneEnd[lane] ?? 0, y2);
+      return { ...e, lane: lane + 1 };
+    });
 
   return {
     nodes,

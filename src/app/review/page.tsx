@@ -23,7 +23,7 @@ export default async function ReviewPage() {
   return (
     <main className="min-h-screen">
       <div className="mx-auto max-w-2xl px-3 py-8 sm:px-6">
-        <Link href="/" className="text-sm text-[#17242D]/55 hover:text-[#17242D]">
+        <Link href="/tree" className="text-sm text-[#17242D]/55 hover:text-[#17242D]">
           ← 回技能樹
         </Link>
         <h1 className="mt-3 text-xl font-bold tracking-tight">今日複習</h1>

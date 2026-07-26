@@ -88,7 +88,7 @@ export default function ReviewSession({
             回複習佇列
           </Link>
           <Link
-            href="/"
+            href="/tree"
             className="rounded-lg bg-white px-4 py-2 text-[#17242D] hover:opacity-90"
           >
             看技能樹 →

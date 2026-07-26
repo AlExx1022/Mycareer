@@ -1,36 +1,46 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { getSkillTreeForUser } from "@/db/queries/skill-tree";
-import { SignOutButton } from "./sign-out-button";
-import { SkillTreeMap } from "./skill-tree-map";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { GITHUB_URL } from "./landing/content";
+import { SectionCta } from "./landing/section-cta";
+import { SectionDifference } from "./landing/section-difference";
+import { SectionHero } from "./landing/section-hero";
+import { SectionLoop } from "./landing/section-loop";
+import { SectionMemory } from "./landing/section-memory";
+import { Spine } from "./landing/spine";
 
-export default async function Home() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    redirect("/login");
-  }
+export const metadata: Metadata = {
+  title: "Mycareer｜會記得你的學習系統",
+  description:
+    "排好順序的技能樹加上 AI 教學與檢核：答得出來才算過，太久沒複習的節點會裂開回到複習清單。個人作品集專案。",
+  openGraph: {
+    title: "Mycareer｜會記得你的學習系統",
+    description:
+      "排好順序的技能樹加上 AI 教學與檢核：答得出來才算過，太久沒複習的節點會裂開回到複習清單。",
+    type: "website",
+  },
+};
 
-  const units = await getSkillTreeForUser(session.user.id);
-
+export default function LandingPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl px-3 py-8 sm:px-6">
-        <header className="flex flex-wrap items-center justify-between gap-3 pb-6">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
-              React 技能樹
-            </h1>
-            <p className="mt-1 text-sm font-medium text-[#17242D]/55">
-              點車站看詳情；已經會的站可以直接標記，從你的位置出發。
-            </p>
-          </div>
-          <div className="flex items-center gap-3 text-sm font-medium text-[#17242D]/70">
-            <span>{session.user.email}</span>
-            <SignOutButton />
-          </div>
-        </header>
-        <SkillTreeMap units={units} />
+      <Spine />
+      <div className="mx-auto max-w-[1180px] px-5 pb-10 sm:px-8 lg:pl-24">
+        <SectionHero />
+        <SectionDifference />
+        <SectionLoop />
+        <SectionMemory />
+        <SectionCta />
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#17242D]/8 py-8 text-xs font-bold text-[#17242D]/45">
+          <span className="font-mono">Mycareer</span>
+          <span className="flex gap-4">
+            <Link href={GITHUB_URL} className="hover:text-[#17242D]">
+              GitHub
+            </Link>
+            <Link href="/login" className="hover:text-[#17242D]">
+              登入
+            </Link>
+          </span>
+        </footer>
       </div>
     </main>
   );

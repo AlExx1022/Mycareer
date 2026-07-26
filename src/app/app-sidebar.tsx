@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/", label: "技能樹", emoji: "🗺️" },
+  { href: "/tree", label: "技能樹", emoji: "🗺️" },
   { href: "/review", label: "今日複習", emoji: "🔥" },
 ];
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (pathname === "/login" || pathname === "/signup") return children;
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup")
+    return children;
 
   return (
     <>
@@ -19,8 +20,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           Mycareer
         </p>
         {links.map((l) => {
-          const active =
-            l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+          const active = pathname.startsWith(l.href);
           return (
             <Link
               key={l.href}

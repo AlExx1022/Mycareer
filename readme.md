@@ -2,8 +2,8 @@
 
 Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹上點一個節點，AI 教你 → 出題檢核 → 追問到確認真懂 → 掌握度更新，久沒複習的節點會裂開回到複習佇列。
 
-**Demo**：https://mycareer-pi.vercel.app（可自行註冊）
-**狀態**：核心循環已上線（C0–C6.2 完成），第一條路徑 React Junior → Mid 可完整體驗。
+**Demo**：https://mycareer-pi.vercel.app （首頁是專案簡報，可用 demo 帳號一鍵進站，也可自行註冊）
+**狀態**：核心循環已上線（C0–C6.3 完成），第一條路徑 React Junior → Mid 可完整體驗。
 
 ## 為什麼做
 
@@ -31,15 +31,16 @@ Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹�
 | C2 | 技能樹地圖 UI（三態節點、GSAP、標記已會） | ✅ |
 | C3 | LangGraph.js 學習循環（教學 → 蘇格拉底檢核 → 掌握度） | ✅ |
 | C4 | 實作型節點（Sandpack + 測試 + AI code review） | ✅ |
-| C4.5 / C4.6 | 小單元制、混合題型、課綱粒度重構（12 → 26 節點） | ✅ |
+| C4.5 / C4.6 | 小單元制、混合題型、課綱粒度重構（12 → 24 節點） | ✅ |
 | C5 | 掌握度衰減、節點裂開、弱點導向複習佇列 | ✅ |
 | C6.1 / C6.2 | 視覺打磨（Duolingo 風蜿蜒技能樹、糖果色設計） | ✅ |
+| C6.3 | Landing page（`/` 專案簡報 + demo 一鍵入口，技能樹移至 `/tree`） | ✅ |
 
 開發階段的完整編排見 [`roadmap.md`](roadmap.md)，規格與變更提案在 [`openspec/`](openspec/)。
 
 ## 學習結構
 
-- **路徑（Path）**：人工策展的技能樹 JSON——單元（Unit）→ 節點（Lesson），節點間有依賴關係，未解鎖不能跳。目前 2 個 Unit、26 個節點（21 概念型 + 5 實作型），依 12 個 topic 聚群。
+- **路徑（Path）**：人工策展的技能樹 JSON——單元（Unit）→ 節點（Lesson），節點間有依賴關係，未解鎖不能跳。目前 2 個 Unit、24 個節點（20 概念型 + 4 實作型），依 12 個 topic 聚群。
 - **節點兩型**：
   - **概念型**（closure、render/commit、dependency array…）：蘇格拉底對話檢核。
   - **實作型**（寫 useDebounce、受控表單…）：瀏覽器內寫 code 驗收。

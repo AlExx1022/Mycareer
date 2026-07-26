@@ -22,7 +22,7 @@ export async function markLessonKnown(lessonId: string) {
       target: [userLessonMastery.userId, userLessonMastery.lessonId],
       set: { score: 100, assessedAt: new Date() },
     });
-  revalidatePath("/");
+  revalidatePath("/tree");
 }
 
 export async function unmarkLessonKnown(lessonId: string) {
@@ -35,5 +35,5 @@ export async function unmarkLessonKnown(lessonId: string) {
         eq(userLessonMastery.lessonId, lessonId),
       ),
     );
-  revalidatePath("/");
+  revalidatePath("/tree");
 }

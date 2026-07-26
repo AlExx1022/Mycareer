@@ -23,7 +23,7 @@ export default function LoginPage() {
       setError("Email 或密碼錯誤");
       return;
     }
-    router.push("/");
+    router.push("/tree");
   }
 
   return (
@@ -66,14 +66,20 @@ export default function LoginPage() {
             {loading ? "登入中⋯" : "登入"}
           </button>
         </form>
-        <form action={demoLogin} className="mt-3">
-          <button
-            type="submit"
-            className="w-full rounded-lg border border-[#17242D]/20 py-3 text-sm font-medium hover:bg-[#17242D]/5"
-          >
-            用 Demo 帳號逛逛
-          </button>
-        </form>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            setError("");
+            setLoading(true);
+            const result = await demoLogin();
+            setLoading(false);
+            if (result?.error) setError(result.error);
+          }}
+          className="mt-3 w-full rounded-lg border border-[#17242D]/20 py-3 text-sm font-medium hover:bg-[#17242D]/5 disabled:opacity-50"
+        >
+          用 Demo 帳號逛逛
+        </button>
         <p className="mt-6 text-sm text-[#17242D]/60">
           沒有帳號？{" "}
           <Link href="/signup" className="font-medium text-[#17242D] underline">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -8,7 +8,6 @@ import type { SkillTreeUnit } from "@/db/queries/skill-tree";
 import {
   CENTER_X,
   SNAKE_AMP,
-  STEP_Y,
   deriveNodeStates,
   layoutSkillTree,
   findYouAreHere,
@@ -72,18 +71,28 @@ function CrackIcon({ size, color }: { size: number; color: string }) {
   );
 }
 
-// 蜿蜒路徑：相鄰站 S 曲線；跨站分支走左側固定廊道，避開中間站點
+// 蜿蜒路徑：相鄰站 S 曲線；跨站分支走左側廊道，每條 lane 往左讓開避免疊在一起
 const GUTTER_X = CENTER_X - SNAKE_AMP - 82;
-function edgePath(x1: number, y1: number, x2: number, y2: number) {
-  if (y2 - y1 <= STEP_Y) {
+const LANE_GAP = 16;
+function edgePath(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  lane: number,
+) {
+  if (lane === 0) {
     const my = (y1 + y2) / 2;
     return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
   }
-  return `M ${x1} ${y1} C ${GUTTER_X} ${y1 + 44}, ${GUTTER_X} ${y2 - 44}, ${x2} ${y2}`;
+  const gx = GUTTER_X - (lane - 1) * LANE_GAP;
+  return `M ${x1} ${y1} C ${gx} ${y1 + 44}, ${gx} ${y2 - 44}, ${x2} ${y2}`;
 }
 
 export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const prevLitRef = useRef<Set<string> | null>(null);
@@ -91,6 +100,18 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
   const allLessons = useMemo(() => units.flatMap((u) => u.lessons), [units]);
   const layout = useMemo(() => layoutSkillTree(units), [units]);
   const states = useMemo(() => deriveNodeStates(allLessons), [allLessons]);
+
+  // 地圖是固定 px 佈局，用 zoom 等比縮放填滿與 header 同寬的容器
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+    const ro = new ResizeObserver(([entry]) =>
+      setZoom(entry.contentRect.width / layout.width),
+    );
+    ro.observe(shell);
+    return () => ro.disconnect();
+  }, [layout.width]);
+
   const nodeById = useMemo(
     () => new Map(layout.nodes.map((n) => [n.lesson.id, n])),
     [layout],
@@ -188,7 +209,7 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
   }
 
   return (
-    <div className="pb-40">
+    <div ref={shellRef} className="pb-40">
       {crackedCount > 0 && (
         <Link
           href="/review"
@@ -201,8 +222,8 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
       )}
       <div
         ref={mapRef}
-        className="relative mx-auto lg:[zoom:1.5]"
-        style={{ width: layout.width, height: layout.height }}
+        className="relative"
+        style={{ width: layout.width, height: layout.height, zoom }}
       >
         {layout.topics.map((t) => {
           const { c } = ROUTES[t.unitIndex % ROUTES.length];
@@ -239,23 +260,32 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
             const from = nodeById.get(e.from)!;
             const to = nodeById.get(e.to)!;
             const transfer = from.unitIndex !== to.unitIndex;
-            const skip = to.y - from.y > STEP_Y;
+            const branch = e.lane > 0;
+            const active = selectedId === e.to || selectedId === e.from;
             const dimmed = states.get(e.to) === "locked";
+            // 分支線平時退到背景，選到某站才點亮它的前置路線，避免下半部線條打結
+            const opacity = branch
+              ? active
+                ? 0.9
+                : 0.12
+              : dimmed
+                ? 1
+                : 0.35;
             return (
               <path
                 key={`${e.from}-${e.to}`}
-                className="route-edge"
-                d={edgePath(from.x, from.y, to.x, to.y)}
+                className="route-edge transition-opacity duration-300"
+                d={edgePath(from.x, from.y, to.x, to.y, e.lane)}
                 fill="none"
                 stroke={
-                  dimmed
+                  dimmed && !active
                     ? LOCKED_FILL
                     : ROUTES[to.unitIndex % ROUTES.length].c
                 }
-                strokeWidth={skip ? 6 : 10}
+                strokeWidth={branch ? (active ? 7 : 5) : 10}
                 strokeLinecap="round"
                 strokeDasharray={transfer ? "1 14" : undefined}
-                opacity={dimmed ? 1 : 0.35}
+                style={{ opacity }}
               />
             );
           })}

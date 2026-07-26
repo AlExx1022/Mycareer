@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "React 技能樹｜Mycareer",
-  description: "一張會記得你的 React 學習路線圖——哪裡不熟、哪裡該複習，它都記得。",
+  title: { default: "Mycareer", template: "%s" },
+  description: "結構化 AI 學習系統——工程師版 Duolingo。",
 };
 
 export default function RootLayout({

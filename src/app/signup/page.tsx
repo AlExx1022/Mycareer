@@ -30,7 +30,7 @@ export default function SignupPage() {
       );
       return;
     }
-    router.push("/");
+    router.push("/tree");
   }
 
   return (
