@@ -13,7 +13,7 @@ export const CANDY = {
   accent: "#E8590C",
 } as const;
 
-export const GITHUB_URL = "https://github.com/diedie1022/Mycareer";
+export const GITHUB_URL = "https://github.com/AlExx1022/Mycareer";
 
 // LP 的段落＝一條路徑，站碼與技能樹同語法；順序有意義，不是裝飾編號
 export const STATIONS = [
