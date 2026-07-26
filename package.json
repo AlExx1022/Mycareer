@@ -1,5 +1,5 @@
 {
-  "name": "webapp",
+  "name": "mycareer",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "npm run test:skill-tree && npm run test:mastery-decay && npm run test:review-session",
+    "test:skill-tree": "tsx --env-file-if-exists=.env src/lib/skill-tree.selfcheck.ts",
+    "test:mastery-decay": "tsx --env-file-if-exists=.env src/lib/mastery-decay.selfcheck.ts",
+    "test:review-session": "tsx --env-file-if-exists=.env src/lib/review-session.selfcheck.ts",
+    "test:db": "tsx --env-file=.env src/lib/llm-limit.selfcheck.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx --env-file=.env src/db/seed.ts"

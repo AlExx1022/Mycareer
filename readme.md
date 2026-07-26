@@ -1,5 +1,7 @@
 # Mycareer — 結構化 AI 學習系統（工程師版 Duolingo）
 
+[![CI](https://github.com/AlExx1022/Mycareer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlExx1022/Mycareer/actions/workflows/ci.yml)
+
 Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹上點一個節點，AI 教你 → 出題檢核 → 追問到確認真懂 → 掌握度更新，久沒複習的節點會裂開回到複習佇列。
 
 **Demo**：https://mycareer-pi.vercel.app （首頁是專案簡報，可用 demo 帳號一鍵進站，也可自行註冊）
@@ -112,4 +114,15 @@ npm run dev
 ```
 
 `LLM_DAILY_LIMIT`（預設 50）限制單一使用者每日 LLM 呼叫次數，公開網址不裸奔成本。
+
+## 驗證
+
+```bash
+npm test        # 純邏輯 self-check：技能樹佈局與解鎖、掌握度衰減、複習佇列
+npm run test:db # 需要真 DB 的檢查：LLM 每日額度（會寫入再自行清除）
+npm run lint
+npx tsc --noEmit
+```
+
+核心規則以 `src/lib/*.selfcheck.ts` 的斷言守住——解鎖要求前置全亮、裂開節點不鎖下游、分支廊道不超出畫布、衰減曲線與門檻、複習佇列排序。CI（`.github/workflows/ci.yml`）在每次 push 與 PR 跑 lint、型別檢查、`npm test` 與 build。
 
