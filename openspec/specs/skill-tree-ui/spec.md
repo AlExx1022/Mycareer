@@ -4,15 +4,28 @@
 TBD - created by archiving change skill-tree-ui. Update Purpose after archive.
 ## Requirements
 ### Requirement: 技能樹地圖頁
-系統 SHALL 在使用者登入後的首頁顯示技能樹地圖：以 Unit 分區、區內按節點的 topic 聚成小群、群內依依賴鏈排列節點、並以連線呈現依賴關係；layout SHALL 可容納約 30 個節點而不損可讀性。
+
+系統 SHALL 在 `/tree` 顯示技能樹地圖（原為 `/`）：直立單欄 layout——Unit 分區縱向堆疊、區內按節點的 topic 聚成小群、依賴鏈由上往下、依賴關係以連線呈現；地圖 SHALL 在手機寬度直向捲動即可完整瀏覽，無需橫向捲動，桌機置中顯示同一 layout。地圖的渲染、狀態與互動行為不變。
 
 #### Scenario: 登入後看到技能樹
-- **WHEN** 已登入使用者開啟首頁
-- **THEN** 顯示全部 Unit 與約 30 個節點，同 topic 節點視覺上聚為一群，依賴關係以連線呈現
+
+- **WHEN** 已登入使用者開啟 `/tree`
+- **THEN** 顯示全部 Unit 與節點，路線由上往下延伸，同 topic 節點視覺上聚為一群，依賴關係以連線呈現
 
 #### Scenario: 未登入
-- **WHEN** 未登入開啟首頁
-- **THEN** 導向登入頁（沿用既有 middleware 行為）
+
+- **WHEN** 未登入開啟 `/tree`
+- **THEN** 導向登入頁
+
+#### Scenario: 登入後導向
+
+- **WHEN** 使用者由登入、註冊或 demo 入口完成驗證
+- **THEN** 導向 `/tree`
+
+#### Scenario: 標記已會後刷新
+
+- **WHEN** 使用者在地圖上標記或取消標記某節點已會
+- **THEN** `/tree` 的技能樹重新取得資料並反映新狀態
 
 ### Requirement: 節點狀態視覺化
 系統 SHALL 依掌握度與依賴推導節點狀態並以視覺區分：亮燈（原始分數 ≥ 門檻且未裂開）、裂開（依 mastery-decay 推導：曾亮燈且有效掌握度 < 裂開門檻）、上鎖（任一依賴節點未曾亮燈）、可學（其餘）。裂開節點 SHALL 仍可點擊進入。

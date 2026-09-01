@@ -1,32 +1,13 @@
-import type { LessonIntro, RubricItem } from "@/db/skill-tree-schema";
+import type { CurriculumPath, CurriculumUnit } from "./types";
+
+export type { CurriculumLesson, CurriculumUnit } from "./types";
 
 // 課綱：React Junior → Mid（第一條策展路徑）
 // ⚠️ C4.6 重策展草稿（一節點一概念）——intro、考點與 rubric 文字待作者人工審訂，
 // 結構（Unit / topic / 節點切分、依賴關係）為定稿，文字內容請作者修改後重跑 db:seed。
 // 考點依難度遞進排序：第 1 點直覺認識 → 第 2 點原理理解 → 第 3 點深入/常見誤解。
 
-type BaseLesson = {
-  slug: string;
-  title: string;
-  topic: string;
-  dependsOn: string[];
-  examPoints: string[];
-  rubric: RubricItem[];
-};
-
-export type CurriculumLesson = BaseLesson &
-  (
-    | { type: "concept"; intro: LessonIntro }
-    | { type: "practice"; intro?: LessonIntro }
-  );
-
-export type CurriculumUnit = {
-  slug: string;
-  title: string;
-  lessons: CurriculumLesson[];
-};
-
-export const curriculum: CurriculumUnit[] = [
+const units: CurriculumUnit[] = [
   {
     slug: "react-core-model",
     title: "React 核心心智模型",
@@ -328,6 +309,28 @@ export const curriculum: CurriculumUnit[] = [
         type: "practice",
         topic: "受控表單",
         dependsOn: ["functional-updates"],
+        practiceRuntime: "react-ts",
+        practiceBlueprint: {
+          objective: "實作一個全程由 React state 驅動、會即時驗證的多欄位表單。",
+          requirements: [
+            "所有可編輯欄位的 value 均來自 state，onChange 只透過 state 更新表單",
+            "使用單一表單 state 處理至少兩個命名欄位，不直接操作 DOM",
+            "送出時驗證必填與格式，並在對應欄位旁顯示可辨識的錯誤訊息",
+            "驗證通過時呼叫提供的 submit callback，傳入當前表單資料",
+          ],
+          edgeCases: [
+            "只含空白字元的必填值應視為空值",
+            "錯誤後修正欄位再送出，錯誤訊息必須正確清除",
+            "連續編輯不得丟失其他欄位的值",
+          ],
+          starterSignature:
+            "export default function ControlledForm({ onSubmit }: ControlledFormProps): JSX.Element",
+          timeboxMinutes: 35,
+          followUps: [
+            "如何在不產生 race condition 的前提下加入非同步驗證？",
+            "欄位增加到十個以上時，你會如何調整 state 與 validation 設計？",
+          ],
+        },
         examPoints: [
           "受控 vs 非受控元件",
           "多欄位表單的 state 設計",
@@ -349,6 +352,28 @@ export const curriculum: CurriculumUnit[] = [
         type: "practice",
         topic: "元件拆分",
         dependsOn: ["children-composition", "conditional-rendering-pitfalls"],
+        practiceRuntime: "react-ts",
+        practiceBlueprint: {
+          objective: "將單體 React 介面重構為可組合元件，並把共用 state 放在正確層級。",
+          requirements: [
+            "將反覆的外觀與內容拆成至少兩個職責單一的元件",
+            "容器使用 children 或明確的 JSX prop 接收內容，不以複製結構處理變體",
+            "多個子元件共用的 state 由最近共同父層持有，子元件透過 callback 發出事件",
+            "props 介面保持最小且具有明確 TypeScript 型別",
+          ],
+          edgeCases: [
+            "空資料時應顯示空狀態而非空白區塊",
+            "任一子元件發出事件後，所有相關元件應顯示一致資料",
+            "可選內容缺少時不得產生 runtime error",
+          ],
+          starterSignature:
+            "export default function Dashboard({ items }: DashboardProps): JSX.Element",
+          timeboxMinutes: 40,
+          followUps: [
+            "哪些情況會讓你改用 Context，而不再繼續提升 state？",
+            "如何在不過度拆分的前提下判斷元件邊界？",
+          ],
+        },
         examPoints: [
           "何時拆元件、props 介面設計",
           "lifting state up",
@@ -614,6 +639,28 @@ export const curriculum: CurriculumUnit[] = [
         type: "practice",
         topic: "useDebounce",
         dependsOn: ["stale-closure-fixes", "extracting-custom-hooks"],
+        practiceRuntime: "react-ts",
+        practiceBlueprint: {
+          objective: "實作可重用的泛型 useDebounce hook，只在值停止變動達指定時間後公開最新值。",
+          requirements: [
+            "hook 接受任意型別的 value 與 delay，回傳型別必須與 value 一致",
+            "value 或 delay 變動時重新計時，間隔內連續變動只採用最後一個值",
+            "effect cleanup 會清除尚未執行的 timer",
+            "不使用 any，也不以不安全的 type assertion 繞過型別",
+          ],
+          edgeCases: [
+            "delay 為 0 時仍應在 effect 排程後正確更新",
+            "元件在 timer 到期前 unmount 不得產生後續更新",
+            "對象或陣列值必須保留原本型別與最新參照",
+          ],
+          starterSignature:
+            "export function useDebounce<T>(value: T, delay: number): T",
+          timeboxMinutes: 30,
+          followUps: [
+            "如果需要提供 cancel 與 flush，hook API 會怎麼設計？",
+            "debounce 與 throttle 在搜尋、scroll 情境的取捨是什麼？",
+          ],
+        },
         examPoints: [
           "debounce 原理與 cleanup",
           "泛型 hook 介面",
@@ -635,6 +682,28 @@ export const curriculum: CurriculumUnit[] = [
         type: "practice",
         topic: "資料請求",
         dependsOn: ["extracting-custom-hooks", "conditional-rendering-pitfalls"],
+        practiceRuntime: "react-ts",
+        practiceBlueprint: {
+          objective: "實作能完整呈現請求狀態並防止過期回應覆蓋新資料的 React 資料頁。",
+          requirements: [
+            "明確維護 loading、error 與 data，並對每種狀態呈現可辨識 UI",
+            "query 變動時發送新請求，清除上一次錯誤且不顯示舊資料為新結果",
+            "使用 AbortController 或等效的 ignore 機制，防止較晚完成的舊請求寫回 state",
+            "effect cleanup 會取消或作廢不再需要的請求",
+          ],
+          edgeCases: [
+            "空 query 不發送請求，並回到可預期的初始狀態",
+            "請求以與發送順序相反的順序完成時，UI 只顯示最新 query 的結果",
+            "AbortError 不得被當成使用者可見的失敗",
+          ],
+          starterSignature:
+            "export default function SearchResults({ query, fetchResults }: SearchResultsProps): JSX.Element",
+          timeboxMinutes: 45,
+          followUps: [
+            "要加入 cache 與 request deduplication 時，你會自己寫還是導入資料請求庫？",
+            "如何把多個布林 state 重構成不可能出現矛盾狀態的 union？",
+          ],
+        },
         examPoints: [
           "loading / error / data 三態",
           "race condition 與請求取消",
@@ -653,3 +722,19 @@ export const curriculum: CurriculumUnit[] = [
     ],
   },
 ];
+
+export const reactJuniorMidCurriculum: CurriculumPath = {
+  id: "react-junior-mid",
+  title: "React Junior → Mid",
+  description:
+    "建立 React 核心心智模型，掌握 Hooks、資料流與常見實作面試題。",
+  subject: "React",
+  codeLanguage: "TypeScript",
+  status: "published",
+  position: 1,
+  recommendedPrerequisitePathIds: ["javascript-interview-core"],
+  units,
+};
+
+// 暫保留舊 export，讓 landing 統計與過渡中的查詢不必同步改寫。
+export const curriculum = reactJuniorMidCurriculum.units;

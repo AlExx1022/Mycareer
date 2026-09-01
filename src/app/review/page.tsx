@@ -2,7 +2,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { getSkillTreeForUser } from "@/db/queries/skill-tree";
+import {
+  getPublishedLearningPathsForUser,
+  getSkillTreeForUser,
+} from "@/db/queries/skill-tree";
 import { weaknessesByLesson, type WeaknessSummary } from "@/db/queries/weakness";
 import { deriveNodeStates } from "@/lib/skill-tree";
 
@@ -10,8 +13,13 @@ export default async function ReviewPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const units = await getSkillTreeForUser(session.user.id);
-  const lessons = units.flatMap((u) => u.lessons);
+  const paths = await getPublishedLearningPathsForUser(session.user.id);
+  const trees = await Promise.all(
+    paths.map((path) => getSkillTreeForUser(session.user.id, path.id)),
+  );
+  const lessons = trees.flatMap(
+    (tree) => tree?.units.flatMap((value) => value.lessons) ?? [],
+  );
   const states = deriveNodeStates(lessons);
   const cracked = lessons
     .filter((l) => states.get(l.id) === "cracked")

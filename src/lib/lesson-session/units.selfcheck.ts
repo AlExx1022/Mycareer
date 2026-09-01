@@ -156,10 +156,19 @@ assert.ok(
 // ---- 單元導出 ----
 
 const us = freshUnitsState({
-  id: "x",
+  lessonId: "x",
   title: "t",
+  lessonType: "concept",
+  topic: "test",
+  intro: null,
+  subject: "React",
+  codeLanguage: "TypeScript",
+  pathId: "react-junior-mid",
+  pathTitle: "React Junior → Mid",
   examPoints: ["p1", "p2"],
   rubric: [],
+  practiceRuntime: null,
+  practiceBlueprint: null,
 });
 assert.equal(us.units.length, 2, "每個考點一個單元");
 assert.equal(us.currentUnit, 0, "從第一單元開始");

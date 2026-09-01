@@ -1,11 +1,10 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { eq } from "drizzle-orm";
 import type { UIMessage } from "ai";
 import { auth } from "@/lib/auth";
-import { db } from "@/db";
-import { lesson } from "@/db/schema";
+import { withDraftPreview } from "@/lib/draft-preview";
+import { getLessonContextForPreview } from "@/lib/lesson-request-context";
 import { loadSession } from "@/lib/lesson-session/store";
 import { stripQuestion, type QuestionData } from "@/lib/lesson-session/units";
 import LessonChat from "./lesson-chat";
@@ -13,24 +12,37 @@ import PracticeSession from "./practice-session";
 
 export default async function LessonPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string | string[] }>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const [requestHeaders, { slug }, query] = await Promise.all([
+    headers(),
+    params,
+    searchParams,
+  ]);
+  const [session, requestContext] = await Promise.all([
+    auth.api.getSession({ headers: requestHeaders }),
+    getLessonContextForPreview(slug, query.preview),
+  ]);
   if (!session) {
     redirect("/login");
   }
 
-  const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found) {
+  if (!requestContext) {
     notFound();
   }
+  const { lesson: found, previewPathId } = requestContext;
 
-  const chat =
-    found.type === "concept"
-      ? await loadSession(session.user.id, slug)
-      : null;
+  const [chat, DraftPilotFeedback] = await Promise.all([
+    found.lessonType === "concept"
+      ? loadSession(session.user.id, slug)
+      : Promise.resolve(null),
+    previewPathId
+      ? import("./draft-pilot-feedback").then((module) => module.default)
+      : Promise.resolve(null),
+  ]);
   const initialMessages: UIMessage[] =
     chat?.messages.map((m, i) => ({
       id: `restored-${i}`,
@@ -60,14 +72,31 @@ export default async function LessonPage({
   return (
     <main
       className={`mx-auto min-h-screen px-6 py-8 ${
-        found.type === "practice" ? "max-w-6xl" : "max-w-2xl"
+        found.lessonType === "practice" ? "max-w-6xl" : "max-w-2xl"
       }`}
     >
-      <Link href="/tree" className="text-sm text-[#17242D]/55 hover:text-[#17242D]">
+      <Link
+        href={withDraftPreview(`/tree/${found.pathId}`, previewPathId)}
+        className="text-sm text-[#17242D]/55 hover:text-[#17242D]"
+      >
         ← 回技能樹
       </Link>
+      {previewPathId && (
+        <>
+          <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
+            Draft 試走模式 · 本次學習進度會保留
+          </p>
+          {DraftPilotFeedback ? (
+            <DraftPilotFeedback
+              pathId={previewPathId}
+              lessonId={found.lessonId}
+              lessonTitle={found.title}
+            />
+          ) : null}
+        </>
+      )}
       <p className="mt-6 font-mono text-xs text-[#17242D]/45">
-        {found.type === "concept" ? "概念節點" : "實作節點"}
+        {found.lessonType === "concept" ? "概念節點" : "實作節點"}
         {found.topic ? ` · ${found.topic}` : null}
       </p>
       <h1 className="mt-1 text-2xl font-bold">{found.title}</h1>
@@ -119,9 +148,10 @@ export default async function LessonPage({
           initialMessages={initialMessages}
           passed={chat.phase === "passed"}
           initialQuestion={initialQuestion}
+          previewPathId={previewPathId}
         />
       ) : (
-        <PracticeSession slug={slug} />
+        <PracticeSession slug={slug} previewPathId={previewPathId} />
       )}
     </main>
   );

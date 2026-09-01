@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
 import {
   streamText,
   convertToModelMessages,
@@ -9,15 +8,15 @@ import {
 } from "ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { lesson, userLessonMastery, weaknessRecord } from "@/db/schema";
+import { userLessonMastery, weaknessRecord } from "@/db/schema";
 import { consumeLlmQuota } from "@/lib/llm-limit";
-import { getSkillTreeForUser } from "@/db/queries/skill-tree";
-import { deriveNodeStates } from "@/lib/skill-tree";
+import { withDraftPreview } from "@/lib/draft-preview";
+import { getLessonContextForRequest } from "@/lib/lesson-request-context";
+import { nextAvailableLesson } from "@/lib/next-lesson";
 import {
   sessionGraph,
   systemPrompt,
   MODEL,
-  type LessonMeta,
 } from "@/lib/lesson-session/graph";
 import {
   freshUnitsState,
@@ -30,30 +29,27 @@ import { loadSession, saveSession } from "@/lib/lesson-session/store";
 export const maxDuration = 300;
 
 // 假設當前節點已過關，找出路線上下一個可學節點
-async function nextLessonHint(userId: string, currentId: string) {
-  const units = await getSkillTreeForUser(userId);
-  const lessons = units
-    .flatMap((u) => u.lessons)
-    .map((l) =>
-      l.id === currentId
-        ? {
-            ...l,
-            mastery: {
-              score: 100,
-              assessedAt: new Date(),
-              effective: 100,
-              cracked: false,
-            },
-          }
-        : l,
+async function nextLessonHint(
+  userId: string,
+  currentId: string,
+  previewPathId: string | null,
+) {
+  const result = await nextAvailableLesson(userId, currentId, {
+    includeDraft: previewPathId !== null,
+  });
+  if (!result) return "告訴他目前無法取得下一站。";
+  if (result.pathComplete) {
+    const treeHref = withDraftPreview(
+      `/tree/${result.pathId}`,
+      previewPathId,
     );
-  const states = deriveNodeStates(lessons);
-  const next = lessons.find(
-    (l) => l.id !== currentId && states.get(l.id) === "available",
+    return `告訴他已完成目前路徑，並附上返回技能樹連結：[返回技能樹](${treeHref})。`;
+  }
+  const lessonHref = withDraftPreview(
+    `/lesson/${result.next.id}`,
+    previewPathId,
   );
-  return next
-    ? `推薦他下一站學「${next.title}」，並附上連結（markdown 格式）：[${next.title}](/lesson/${next.id})。`
-    : "告訴他目前路線上已沒有其他可學節點，可以回技能樹看看全貌。";
+  return `推薦他下一站學「${result.next.title}」，並附上連結（markdown 格式）：[${result.next.title}](${lessonHref})。`;
 }
 
 export async function POST(
@@ -65,10 +61,11 @@ export async function POST(
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "concept") {
+  const requestContext = await getLessonContextForRequest(slug, req.url);
+  if (!requestContext || requestContext.lesson.lessonType !== "concept") {
     return new Response("Not Found", { status: 404 });
   }
+  const { lesson: meta, previewPathId } = requestContext;
 
   if (!(await consumeLlmQuota(userId))) {
     return new Response("今日的 AI 對話額度已用完，明天再來吧！", {
@@ -83,13 +80,6 @@ export async function POST(
       .filter((p) => p.type === "text")
       .map((p) => p.text)
       .join("") ?? "";
-
-  const meta: LessonMeta = {
-    id: found.id,
-    title: found.title,
-    examPoints: found.examPoints,
-    rubric: found.rubric,
-  };
 
   const snapshot = await loadSession(userId, slug);
   snapshot.messages.push({ role: "user", content: userText });
@@ -115,7 +105,7 @@ export async function POST(
       unit.current = 0;
       // 題目先落 DB，streaming 中斷也不用重新出題
       await saveSession(userId, slug, snapshot);
-      instructions = `現在開始第 ${us.currentUnit + 1}/${us.units.length} 個小單元，考點：「${unit.examPoint}」。依序講：是什麼（一句話定義）→ 為什麼（背後的原因或動機）→ 一個貼近開發情境的類比 → 程式碼例（TypeScript，8 行以內）。全文 200–400 字，分段呈現、不要編號標題。${
+      instructions = `現在開始第 ${us.currentUnit + 1}/${us.units.length} 個小單元，考點：「${unit.examPoint}」。依序講：是什麼（一句話定義）→ 為什麼（背後的原因或動機）→ 一個貼近開發情境的類比 → 程式碼例（${meta.codeLanguage}，8 行以內）。全文 200–400 字，分段呈現、不要編號標題。${
         us.currentUnit === 0
           ? "這是本節第一個單元，從直覺切入，程式碼例可省略。"
           : "學生已完成前面單元，可直接往原理與常見誤解走，不要重複基礎。"
@@ -138,7 +128,9 @@ export async function POST(
       "學生已通過本節點檢核，這是過關後的自由問答，直接回答問題。";
   } else {
     const hint =
-      snapshot.phase === "teach" ? "" : await nextLessonHint(userId, slug);
+      snapshot.phase === "teach"
+        ? ""
+        : await nextLessonHint(userId, slug, previewPathId);
     const result = await sessionGraph.invoke({
       lesson: meta,
       messages: snapshot.messages,

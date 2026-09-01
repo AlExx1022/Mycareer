@@ -1,17 +1,13 @@
 import { StateGraph, Annotation, START, END } from "@langchain/langgraph";
 import { generateObject } from "ai";
 import { z } from "zod";
-import type { RubricItem } from "@/db/schema";
 import type { CheckState, SessionPhase, StoredMessage } from "@/db/schema";
+import type { LessonContext } from "@/db/queries/lesson-context";
+import type { RubricItem } from "@/db/skill-tree-schema";
 
 export const MODEL = "google/gemini-3-flash";
 
-export type LessonMeta = {
-  id: string;
-  title: string;
-  examPoints: string[];
-  rubric: RubricItem[];
-};
+export type LessonMeta = LessonContext;
 
 export type WeaknessFound = { criterion: string; summary: string };
 
@@ -70,7 +66,7 @@ async function evaluateNode(state: SessionGraphState) {
 Rubric：
 ${pending.map((r) => `- criterion: ${r.criterion}\n  passCondition: ${r.passCondition}`).join("\n")}
 
-對話（節點「${state.lesson.title}」）：
+對話（${state.lesson.subject} 路徑「${state.lesson.title}」節點）：
 ${recent}`,
   });
 
@@ -133,7 +129,7 @@ const builder = new StateGraph(SessionState)
 export const sessionGraph = builder.compile();
 
 export function systemPrompt(lesson: LessonMeta, replyInstructions: string) {
-  return `你是「Mycareer」技能樹的 AI 導師，正在帶學生上「${lesson.title}」這個 React 概念節點。用繁體中文、口語但精確，像資深同事在 pair programming 時隨口講解，不要像教科書。程式碼範例用 TypeScript。回覆要短：少列點、多用自然段落，一次只丟一個重點和一個問題，寧可分多輪對話也不要一次塞滿。
+  return `你是「Mycareer」技能樹的 AI 導師，正在「${lesson.pathTitle}」路徑帶學生上「${lesson.title}」這個 ${lesson.subject} 概念節點。用繁體中文、口語但精確，像資深同事在 pair programming 時隨口講解，不要像教科書。程式碼範例與 code fence 使用 ${lesson.codeLanguage}。回覆要短：少列點、多用自然段落，一次只丟一個重點和一個問題，寧可分多輪對話也不要一次塞滿。
 
 ${replyInstructions}`;
 }

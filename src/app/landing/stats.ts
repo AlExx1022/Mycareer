@@ -1,10 +1,13 @@
-import { curriculum } from "@/db/curriculum/react-junior-mid";
+import { curricula } from "@/db/curriculum";
 
-// 課綱統計一律從資料算，不寫死——課綱增修後 LP 數字自動跟上
-const lessons = curriculum.flatMap((u) => u.lessons);
+// 公開 LP 統計一律從 published curriculum 算；draft 完成發布後數字自動跟上。
+const published = curricula.filter((path) => path.status === "published");
+const units = published.flatMap((path) => path.units);
+const lessons = units.flatMap((unit) => unit.lessons);
 
 export const stats = {
-  units: curriculum.length,
+  paths: published.length,
+  units: units.length,
   lessons: lessons.length,
   concept: lessons.filter((l) => l.type === "concept").length,
   practice: lessons.filter((l) => l.type === "practice").length,

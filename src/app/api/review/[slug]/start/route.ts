@@ -2,7 +2,8 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { lesson, userLessonMastery } from "@/db/schema";
+import { userLessonMastery } from "@/db/schema";
+import { getLessonContext } from "@/db/queries/lesson-context";
 import { consumeLlmQuota } from "@/lib/llm-limit";
 import { isCracked } from "@/lib/mastery-decay";
 import { recentWeaknesses } from "@/db/queries/weakness";
@@ -26,8 +27,8 @@ export async function POST(
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "concept") {
+  const context = await getLessonContext(slug);
+  if (!context || context.lessonType !== "concept") {
     return new Response("Not Found", { status: 404 });
   }
 
@@ -52,7 +53,7 @@ export async function POST(
     }
     const weaknesses = await recentWeaknesses(userId, slug);
     const questions = await generateReviewQuestions(
-      { id: found.id, title: found.title, examPoints: found.examPoints, rubric: found.rubric },
+      context,
       weaknesses.map((w) => w.summary),
     );
     snapshot = {

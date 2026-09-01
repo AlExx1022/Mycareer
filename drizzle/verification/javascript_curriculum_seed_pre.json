@@ -1,0 +1,16 @@
+{
+  "capturedAt": "2026-08-31",
+  "protectedFingerprints": [
+    { "entity": "react_unit", "rowCount": 2, "digest": "cb9f745d82541a4e699add7b4e2490d9" },
+    { "entity": "react_lesson", "rowCount": 24, "digest": "e0450ea4f6e9a5bb9818c42f80ec2ae8" },
+    { "entity": "react_dependency", "rowCount": 27, "digest": "ebbafcb0352da2848940eca5ea32d219" },
+    { "entity": "mastery", "rowCount": 3, "digest": "cce5d0c53438e1745f83f3ab3758beff" },
+    { "entity": "weakness", "rowCount": 2, "digest": "ae6a52919ef367b6178c5d1b5afd444a" },
+    { "entity": "lesson_session", "rowCount": 3, "digest": "8cc640523ba3421e6711acc7d420f496" },
+    { "entity": "practice_session", "rowCount": 2, "digest": "799a4e736e08b38394aed1c3de88e047" },
+    { "entity": "review_session", "rowCount": 0, "digest": "d41d8cd98f00b204e9800998ecf8427e" }
+  ],
+  "paths": [
+    { "pathId": "react-junior-mid", "status": "published", "position": 0, "unitCount": 2, "lessonCount": 24, "conceptCount": 20, "practiceCount": 4 }
+  ]
+}

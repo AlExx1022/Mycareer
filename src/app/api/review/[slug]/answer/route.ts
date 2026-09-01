@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { lesson, weaknessRecord } from "@/db/schema";
+import { weaknessRecord } from "@/db/schema";
+import { getLessonContext } from "@/db/queries/lesson-context";
 import { consumeLlmQuota } from "@/lib/llm-limit";
 import {
   judgeAnswer,
@@ -27,8 +27,8 @@ export async function POST(
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "concept") {
+  const context = await getLessonContext(slug);
+  if (!context || context.lessonType !== "concept") {
     return new Response("Not Found", { status: 404 });
   }
 
@@ -53,7 +53,7 @@ export async function POST(
         status: 429,
       });
     }
-    const judged = await judgeFreeAnswer(q, answer);
+    const judged = await judgeFreeAnswer(q, answer, context);
     correct = judged.correct;
     explanation = judged.feedback;
   } else {

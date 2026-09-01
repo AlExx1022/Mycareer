@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { reviewSession, userLessonMastery } from "@/db/schema";
 import { MODEL, type LessonMeta } from "./lesson-session/graph";
 import {
-  QUESTION_RULES,
+  questionRules,
   toUnitQuestion,
   unitQuestionsGenSchema,
   type QuestionResult,
@@ -136,11 +136,11 @@ ${lesson.examPoints.map((p) => `- ${p}`).join("\n")}
     model: MODEL,
     schema: unitQuestionsGenSchema,
     maxRetries: 1,
-    prompt: `為 React 技能樹節點「${lesson.title}」出複習題，這個節點的記憶已經衰退，要幫學生撿回來。
+    prompt: `為 ${lesson.subject} 學習路徑「${lesson.pathTitle}」的節點「${lesson.title}」出複習題，這個節點的記憶已經衰退，要幫學生撿回來。程式碼與語法必須使用 ${lesson.codeLanguage}。
 
 ${focus}
 
-${QUESTION_RULES}`,
+${questionRules(lesson.codeLanguage)}`,
   });
   return object;
 }

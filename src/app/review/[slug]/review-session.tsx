@@ -4,11 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ClientQuestion } from "@/lib/lesson-session/units";
 import { QuestionWidget, type Feedback } from "@/app/question-widgets";
+import { renderPromptContent } from "@/app/code-prompt";
 
 type Active = {
   question: ClientQuestion;
   progress: { question: number; totalQuestions: number };
 };
+
+// 答對時的短暫等待，讓 QuestionCard 的三態顏色來得及被看到再切下一題
+const FEEDBACK_FLASH_MS = 600;
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default function ReviewSession({
   slug,
@@ -62,6 +69,8 @@ export default function ReviewSession({
         setActive(null);
         setScore(d.score);
       } else {
+        setFeedback({ correct: true, text: "" });
+        await wait(FEEDBACK_FLASH_MS);
         setFeedback(null);
         setActive({ question: d.next, progress: d.progress });
       }
@@ -126,8 +135,8 @@ export default function ReviewSession({
       <p className="font-mono text-xs text-[#17242D]/45">
         第 {p.question}/{p.totalQuestions} 題
       </p>
-      <p className="mt-2 text-[15px] whitespace-pre-wrap">{q.prompt}</p>
-      <QuestionWidget q={q} onAnswer={submitAnswer} busy={busy} />
+      <div className="mt-2 text-[15px]">{renderPromptContent(q.prompt)}</div>
+      <QuestionWidget q={q} feedback={feedback} onAnswer={submitAnswer} busy={busy} />
       {feedback && (
         <p
           className={`mt-3 rounded-lg px-4 py-2 text-sm ${

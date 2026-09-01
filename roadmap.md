@@ -91,11 +91,23 @@
 
 > demo 帳號預灌與成本防護：暫緩，需要對外投遞時再立 change。
 
+## Phase 4 — 面試導向多課綱
+
+### C7 `multi-path-learning-foundation`
+
+- **目標**：在引入新課前，把單一路徑假設從資料、route、prompt 與 practice runtime 移除。
+- **範圍**：Learning Path → Unit → Lesson、`/tree` 路徑目錄與 `/tree/[pathId]`、path-scoped query、共用 LessonContext、versioned multi-file practice workspace，以及 `react-ts`／`vanilla-ts`／`vanilla-js`／`python` runtime adapters。
+- **驗收**：既有 24 個 React slug 與進度無損；draft path 不公開；next lesson 不跨 path；四種 runtime 皆可逐條回報測試，Python timeout 後可重建 worker。
+- **依賴**：C6.3。
+
+後續課綱 change 依序為 `javascript-interview-curriculum` → `typescript-interview-curriculum` → `python-interview-curriculum`。新路徑先以 draft seed，內容與瀏覽器驗收完成後才改為 published。
+
 ## 建議執行順序
 
 ```
 C0 → C1 → { C2 ∥ C3 } → C4   （里程碑：核心循環上線）
    → C4.5                    （上課體感打磨）
    → C5
-   → C6.1 → C6.2 → C6.3      （作品集就緒；demo 預灌暫緩）
+   → C6.1 → C6.2 → C6.3
+   → C7 → JavaScript → TypeScript → Python
 ```

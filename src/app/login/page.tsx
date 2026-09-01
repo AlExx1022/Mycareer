@@ -32,7 +32,7 @@ export default function LoginPage() {
         <p className="font-mono text-xs font-semibold tracking-wide text-[#0B7285]">
           ● 起點站
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">React 技能樹</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">工程師學習路徑</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-[#17242D]/60">
           一張會記得你的學習路線圖——哪裡不熟、哪裡該複習，它都記得。
         </p>

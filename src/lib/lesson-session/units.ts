@@ -151,25 +151,27 @@ function convert(
 }
 
 // 出題機械規則（單元出題與複習出題共用）
-export const QUESTION_RULES = `規則：
+export function questionRules(codeLanguage: string) {
+  return `規則：
 - 出 3-5 題，題型混用選擇（choice）、填空（fill）、配對（match）、問答（free），至少三種題型，問答最多一題、放最後。
 - 由易到難，每題只考一個小概念，題幹一兩句話就好，不要長篇情境。
-- 內容適合讀程式碼的話，至少一題是讀碼/補碼題：題幹放一小段 TypeScript（反引號標記），用 choice 問輸出／行為，或用 fill 補上挖空的關鍵字。
+- 內容適合讀程式碼的話，至少一題是讀碼/補碼題：題幹放一小段 ${codeLanguage}（反引號標記），用 choice 問輸出／行為，或用 fill 補上挖空的關鍵字。
 - 每題只填該題型需要的欄位，其他欄位一律給空陣列（answer 給 0）。
 - match 的 lefts 與 rights 依序一一對應（顯示時系統會打亂）。
 - explanation 一兩句講清楚為什麼；wrongSummary 一句話描述答錯代表的誤解。
 - 全部繁體中文，語氣輕鬆。`;
+}
 
 async function generate(lesson: LessonMeta, examPoint: string) {
   const { object } = await generateObject({
     model: MODEL,
     schema: unitQuestionsGenSchema,
     maxRetries: 1,
-    prompt: `為 React 技能樹節點「${lesson.title}」的小單元出題。本單元只考這個考點：
+    prompt: `為 ${lesson.subject} 學習路徑「${lesson.pathTitle}」的節點「${lesson.title}」小單元出題。本單元只考這個考點：
 
 ${examPoint}
 
-${QUESTION_RULES}`,
+${questionRules(lesson.codeLanguage)}`,
   });
   return object;
 }
@@ -214,6 +216,7 @@ export function judgeAnswer(q: UnitQuestion, answer: unknown): boolean {
 export async function judgeFreeAnswer(
   q: Extract<UnitQuestion, { type: "free" }>,
   answer: string,
+  lesson: LessonMeta,
 ): Promise<{ correct: boolean; feedback: string }> {
   const { object } = await generateObject({
     model: MODEL,
@@ -226,7 +229,7 @@ export async function judgeFreeAnswer(
         ),
     }),
     maxRetries: 1,
-    prompt: `判定學生對問答題的回答是否正確。用語不必一致，意思到位就算對。
+    prompt: `判定學生對 ${lesson.subject} 節點「${lesson.title}」問答題的回答是否正確。這門課的程式語言是 ${lesson.codeLanguage}。用語不必一致，意思到位就算對。
 
 題目：${q.prompt}
 

@@ -5,7 +5,7 @@
 Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹上點一個節點，AI 教你 → 出題檢核 → 追問到確認真懂 → 掌握度更新，久沒複習的節點會裂開回到複習佇列。
 
 **Demo**：https://mycareer-pi.vercel.app （首頁是專案簡報，可用 demo 帳號一鍵進站，也可自行註冊）
-**狀態**：核心循環已上線（C0–C6.3 完成），第一條路徑 React Junior → Mid 可完整體驗。
+**狀態**：核心循環與多路徑底座已上線，React Junior → Mid 可完整體驗；JavaScript Interview Core 已完成 draft 課綱與五組 browser runtime 驗收，待完整 Unit 人工試走後發布。TypeScript、Python 課綱接續策展。
 
 ## 為什麼做
 
@@ -29,7 +29,7 @@ Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹�
 | 階段 | 內容 | 狀態 |
 | --- | --- | --- |
 | C0 | Next.js + Drizzle + Better Auth + Vercel 部署 | ✅ |
-| C1 | 技能樹資料層（schema 主題無關 + React 課綱 seed） | ✅ |
+| C1 | 技能樹資料層（Path → Unit → Lesson + 多課綱隔離 seed） | ✅ |
 | C2 | 技能樹地圖 UI（三態節點、GSAP、標記已會） | ✅ |
 | C3 | LangGraph.js 學習循環（教學 → 蘇格拉底檢核 → 掌握度） | ✅ |
 | C4 | 實作型節點（Sandpack + 測試 + AI code review） | ✅ |
@@ -37,12 +37,14 @@ Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹�
 | C5 | 掌握度衰減、節點裂開、弱點導向複習佇列 | ✅ |
 | C6.1 / C6.2 | 視覺打磨（Duolingo 風蜿蜒技能樹、糖果色設計） | ✅ |
 | C6.3 | Landing page（`/` 專案簡報 + demo 一鍵入口，技能樹移至 `/tree`） | ✅ |
+| C7 | 多學習路徑、語言 context、四種 practice runtime | ✅ |
+| JavaScript Interview Core | 5 Unit 課綱、concept rubric、五組 Vanilla JS Interview Lab | 🧪 draft／待 Unit 試走 |
 
 開發階段的完整編排見 [`roadmap.md`](roadmap.md)，規格與變更提案在 [`openspec/`](openspec/)。
 
 ## 學習結構
 
-- **路徑（Path）**：人工策展的技能樹 JSON——單元（Unit）→ 節點（Lesson），節點間有依賴關係，未解鎖不能跳。目前 2 個 Unit、24 個節點（20 概念型 + 4 實作型），依 12 個 topic 聚群。
+- **路徑（Path）**：`/tree` 是 published 路徑目錄，`/tree/[pathId]` 才載入單一路徑的技能樹。每條人工策展的 Path 包含 Unit → Lesson；hard dependency 只允許同一路徑，跨路徑前置僅是建議。路徑、Unit、concept 與 practice 統計均由 curriculum aggregate 衍生，draft 不計入公開 landing 數字。
 - **節點兩型**：
   - **概念型**（closure、render/commit、dependency array…）：蘇格拉底對話檢核。
   - **實作型**（寫 useDebounce、受控表單…）：瀏覽器內寫 code 驗收。
@@ -58,7 +60,7 @@ Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹�
 
 檢核分支：
   概念型：蘇格拉底追問（答錯 → 換角度再教 → 再問）
-  實作型：出題 → Sandpack 編輯器寫 code → 測試通過 + AI code review
+  實作型：blueprint 出題 → 多檔案 workspace → runtime adapter 測試通過 + AI code review
 ```
 
 **語意級弱點記錄**：檢核中暴露的具體誤解（例：「以為 useEffect cleanup 只在 unmount 執行」）以文字存檔，不只是分數。後續出題與複習會刻意打向這些記錄——這是「AI 記得你」的實體。
@@ -94,13 +96,13 @@ START ─┬─ teach    ──→ END          小單元做完，開場收尾�
 | 框架 | Next.js 16（App Router）+ React 19 + TypeScript + Tailwind CSS v4 |
 | Agent 流程 | LangGraph.js（session 狀態機，狀態自存 Postgres） |
 | LLM 介接 | Vercel AI SDK v7 → AI Gateway，模型 `google/gemini-3-flash` |
-| 程式碼執行 | Sandpack（瀏覽器內，不需後端沙箱） |
+| 程式碼執行 | Sandpack（React TS / Vanilla TS / Vanilla JS）+ lazy Pyodide Web Worker（Python，逾時重建） |
 | 資料庫 | Neon Postgres + Drizzle ORM |
 | 認證 | Better Auth（Email/Password，含 demo 帳號） |
 | 動畫 | GSAP |
 | 部署 | Vercel 單一服務 |
 
-單一語言、單一服務。對「前端 + AI 應用」作品集的敘事：用 TS 全端掌控 agent 流程。
+所有使用者程式碼只在瀏覽器 sandbox 或 Web Worker 執行，application server 不 eval。Practice session 保存 versioned multi-file workspace；舊 React 三件套與 `user_code` 仍可續作。
 
 ## 本地開發
 
@@ -120,9 +122,10 @@ npm run dev
 ```bash
 npm test        # 純邏輯 self-check：技能樹佈局與解鎖、掌握度衰減、複習佇列
 npm run test:db # 需要真 DB 的檢查：LLM 每日額度（會寫入再自行清除）
+npm run test:javascript-curriculum # JavaScript draft context／rubric DB integration
+npm run test:javascript-generation # 五個 Lab 真實 AI 生成 contract（會呼叫 LLM）
 npm run lint
 npx tsc --noEmit
 ```
 
 核心規則以 `src/lib/*.selfcheck.ts` 的斷言守住——解鎖要求前置全亮、裂開節點不鎖下游、分支廊道不超出畫布、衰減曲線與門檻、複習佇列排序。CI（`.github/workflows/ci.yml`）在每次 push 與 PR 跑 lint、型別檢查、`npm test` 與 build。
-

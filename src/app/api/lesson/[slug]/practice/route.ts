@@ -2,9 +2,16 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { lesson, practiceSession } from "@/db/schema";
+import { practiceSession } from "@/db/schema";
+import { PRACTICE_RUNTIMES } from "@/db/curriculum/types";
 import { consumeLlmQuota } from "@/lib/llm-limit";
+import { getLessonContextForRequest } from "@/lib/lesson-request-context";
 import { generateExercise } from "@/lib/practice-session/llm";
+import {
+  getEntryCode,
+  normalizePracticeWorkspace,
+  sanitizeEditableUserFiles,
+} from "@/lib/practice-session/workspace";
 
 export const maxDuration = 300;
 
@@ -18,9 +25,19 @@ export async function POST(
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "practice") {
+  const requestContext = await getLessonContextForRequest(slug, req.url);
+  if (!requestContext || requestContext.lesson.lessonType !== "practice") {
     return new Response("Not Found", { status: 404 });
+  }
+  const lessonContext = requestContext.lesson;
+  if (
+    !lessonContext.practiceRuntime ||
+    !PRACTICE_RUNTIMES.includes(lessonContext.practiceRuntime) ||
+    !lessonContext.practiceBlueprint
+  ) {
+    return new Response("實作節點缺少支援的 runtime 或 blueprint", {
+      status: 422,
+    });
   }
 
   const { regenerate } = await req
@@ -38,9 +55,14 @@ export async function POST(
         ),
       );
     if (existing) {
-      return Response.json({
-        exercise: existing.exercise,
+      const normalized = normalizePracticeWorkspace(existing.exercise, {
         userCode: existing.userCode,
+        userFiles: existing.userFiles,
+      });
+      return Response.json({
+        exercise: normalized.workspace,
+        userFiles: normalized.userFiles,
+        runtime: lessonContext.practiceRuntime,
         status: existing.status,
       });
     }
@@ -50,16 +72,13 @@ export async function POST(
     return new Response("今日的 AI 額度已用完，明天再來吧！", { status: 429 });
   }
 
-  const exercise = await generateExercise({
-    id: found.id,
-    title: found.title,
-    examPoints: found.examPoints,
-    rubric: found.rubric,
-  });
+  const exercise = await generateExercise(lessonContext);
+  const { userFiles } = normalizePracticeWorkspace(exercise);
 
   const row = {
     exercise,
-    userCode: exercise.starterCode,
+    userCode: getEntryCode(exercise, userFiles),
+    userFiles,
     status: "in_progress" as const,
     updatedAt: new Date(),
   };
@@ -73,12 +92,13 @@ export async function POST(
 
   return Response.json({
     exercise,
-    userCode: exercise.starterCode,
+    userFiles,
+    runtime: lessonContext.practiceRuntime,
     status: "in_progress",
   });
 }
 
-// userCode 自動儲存（不經 LLM、不計額度）
+// 全部可編輯檔案自動儲存（不經 LLM、不計額度）；code 保留給舊 client 相容。
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
@@ -87,14 +107,49 @@ export async function PUT(
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { slug } = await params;
-  const { code } = await req.json();
-  if (typeof code !== "string" || code.length > 20_000) {
+  const [requestContext, body] = await Promise.all([
+    getLessonContextForRequest(slug, req.url),
+    req.json().catch(() => null),
+  ]);
+  if (!requestContext || requestContext.lesson.lessonType !== "practice") {
+    return new Response("Not Found", { status: 404 });
+  }
+  if (!body || typeof body !== "object") {
     return new Response("Bad Request", { status: 400 });
   }
 
+  const [existing] = await db
+    .select()
+    .from(practiceSession)
+    .where(
+      and(
+        eq(practiceSession.userId, session.user.id),
+        eq(practiceSession.lessonId, slug),
+      ),
+    );
+  if (!existing) return new Response("Not Found", { status: 404 });
+
+  const normalized = normalizePracticeWorkspace(existing.exercise, {
+    userCode: existing.userCode,
+    userFiles: existing.userFiles,
+  });
+  const legacyFiles =
+    "code" in body && typeof body.code === "string"
+      ? { ...normalized.userFiles, [normalized.workspace.entryFile]: body.code }
+      : null;
+  const userFiles = sanitizeEditableUserFiles(
+    normalized.workspace,
+    "files" in body ? body.files : legacyFiles,
+  );
+  if (!userFiles) return new Response("Bad Request", { status: 400 });
+
   await db
     .update(practiceSession)
-    .set({ userCode: code, updatedAt: new Date() })
+    .set({
+      userCode: getEntryCode(normalized.workspace, userFiles),
+      userFiles,
+      updatedAt: new Date(),
+    })
     .where(
       and(
         eq(practiceSession.userId, session.user.id),

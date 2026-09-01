@@ -4,7 +4,8 @@ import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { lesson, userLessonMastery } from "@/db/schema";
+import { userLessonMastery } from "@/db/schema";
+import { getLessonContext } from "@/db/queries/lesson-context";
 import { isCracked } from "@/lib/mastery-decay";
 import { stripQuestion } from "@/lib/lesson-session/units";
 import { loadReview } from "@/lib/review-session";
@@ -20,8 +21,8 @@ export default async function ReviewLessonPage({
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "concept") notFound();
+  const found = await getLessonContext(slug);
+  if (!found || found.lessonType !== "concept") notFound();
 
   const snapshot = await loadReview(userId, slug);
   if (!snapshot) {

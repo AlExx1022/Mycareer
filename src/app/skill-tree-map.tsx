@@ -5,6 +5,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { SkillTreeUnit } from "@/db/queries/skill-tree";
+import { withDraftPreview } from "@/lib/draft-preview";
 import {
   CENTER_X,
   SNAKE_AMP,
@@ -89,7 +90,13 @@ function edgePath(
   return `M ${x1} ${y1} C ${gx} ${y1 + 44}, ${gx} ${y2 - 44}, ${x2} ${y2}`;
 }
 
-export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
+export function SkillTreeMap({
+  units,
+  previewPathId = null,
+}: {
+  units: SkillTreeUnit[];
+  previewPathId?: string | null;
+}) {
   const mapRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -445,7 +452,10 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
           ) : (
             <div className="mt-4 flex gap-2">
               <Link
-                href={`/lesson/${selected.lesson.id}`}
+                href={withDraftPreview(
+                  `/lesson/${selected.lesson.id}`,
+                  previewPathId,
+                )}
                 className="flex-1 rounded-2xl px-3 py-2.5 text-center text-sm font-extrabold text-white [box-shadow:0_4px_0_var(--shade)] transition active:translate-y-[3px] active:[box-shadow:0_1px_0_var(--shade)]"
                 style={
                   {
@@ -458,13 +468,15 @@ export function SkillTreeMap({ units }: { units: SkillTreeUnit[] }) {
               </Link>
               <button
                 type="button"
-                disabled={isPending}
+                disabled={isPending || previewPathId !== null}
                 onClick={() =>
                   toggleKnown(selected.lesson.id, selectedState === "lit")
                 }
                 className="flex-1 rounded-2xl border-2 border-[#E5E5E5] px-3 py-2.5 text-sm font-bold text-[#17242D]/70 [box-shadow:0_4px_0_#E5E5E5] transition hover:bg-[#F7F7F7] active:translate-y-[3px] active:[box-shadow:0_1px_0_#E5E5E5] disabled:opacity-50"
               >
-                {isPending
+                {previewPathId
+                  ? "試走請完成課程"
+                  : isPending
                   ? "儲存中…"
                   : selectedState === "lit"
                     ? "取消已會"

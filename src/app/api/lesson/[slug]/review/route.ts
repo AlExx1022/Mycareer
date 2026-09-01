@@ -3,13 +3,18 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import {
-  lesson,
   practiceSession,
   userLessonMastery,
   weaknessRecord,
 } from "@/db/schema";
 import { consumeLlmQuota } from "@/lib/llm-limit";
+import { getLessonContextForRequest } from "@/lib/lesson-request-context";
 import { reviewCode } from "@/lib/practice-session/llm";
+import {
+  getEntryCode,
+  normalizePracticeWorkspace,
+  sanitizeEditableUserFiles,
+} from "@/lib/practice-session/workspace";
 import { nextAvailableLesson } from "@/lib/next-lesson";
 
 export const maxDuration = 300;
@@ -23,9 +28,13 @@ export async function POST(
   const userId = session.user.id;
 
   const { slug } = await params;
-  const [found] = await db.select().from(lesson).where(eq(lesson.id, slug));
-  if (!found || found.type !== "practice") {
+  const requestContext = await getLessonContextForRequest(slug, req.url);
+  if (!requestContext || requestContext.lesson.lessonType !== "practice") {
     return new Response("Not Found", { status: 404 });
+  }
+  const { lesson: lessonContext, previewPathId } = requestContext;
+  if (!lessonContext.practiceRuntime || !lessonContext.practiceBlueprint) {
+    return new Response("實作節點缺少 runtime 或 blueprint", { status: 422 });
   }
 
   const [practice] = await db
@@ -36,11 +45,29 @@ export async function POST(
         eq(practiceSession.userId, userId),
         eq(practiceSession.lessonId, slug),
       ),
-    );
+  );
   if (!practice) return new Response("Not Found", { status: 404 });
 
-  const { code } = await req.json();
-  if (typeof code !== "string" || !code.trim() || code.length > 20_000) {
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return new Response("Bad Request", { status: 400 });
+  }
+  const normalized = normalizePracticeWorkspace(practice.exercise, {
+    userCode: practice.userCode,
+    userFiles: practice.userFiles,
+  });
+  const legacyFiles =
+    "code" in body && typeof body.code === "string"
+      ? { ...normalized.userFiles, [normalized.workspace.entryFile]: body.code }
+      : null;
+  const userFiles = sanitizeEditableUserFiles(
+    normalized.workspace,
+    "files" in body ? body.files : legacyFiles,
+  );
+  if (
+    !userFiles ||
+    !getEntryCode(normalized.workspace, userFiles).trim()
+  ) {
     return new Response("Bad Request", { status: 400 });
   }
 
@@ -50,9 +77,9 @@ export async function POST(
 
   // 過關判定在 server 端：client 的測試結果只是送審門票（design D4）
   const review = await reviewCode(
-    { id: found.id, title: found.title, examPoints: found.examPoints, rubric: found.rubric },
-    practice.exercise,
-    code,
+    lessonContext,
+    normalized.workspace,
+    userFiles,
   );
 
   if (review.weaknesses.length > 0) {
@@ -71,7 +98,8 @@ export async function POST(
   await db
     .update(practiceSession)
     .set({
-      userCode: code,
+      userCode: getEntryCode(normalized.workspace, userFiles),
+      userFiles,
       status: passed ? "passed" : "in_progress",
       updatedAt: new Date(),
     })
@@ -82,7 +110,7 @@ export async function POST(
       ),
     );
 
-  let next = null;
+  let navigation = null;
   if (passed) {
     await db
       .insert(userLessonMastery)
@@ -91,12 +119,16 @@ export async function POST(
         target: [userLessonMastery.userId, userLessonMastery.lessonId],
         set: { score: 100, assessedAt: new Date() },
       });
-    next = await nextAvailableLesson(userId, slug);
+    navigation = await nextAvailableLesson(userId, slug, {
+      includeDraft: previewPathId !== null,
+    });
   }
 
   return Response.json({
     verdict: review.verdict,
     comments: review.comments,
-    next,
+    next: navigation?.next ?? null,
+    pathComplete: navigation?.pathComplete ?? false,
+    pathId: navigation?.pathId ?? lessonContext.pathId,
   });
 }

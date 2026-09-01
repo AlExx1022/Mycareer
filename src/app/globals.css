@@ -18,3 +18,49 @@ body {
   color: var(--foreground);
   font-family: var(--font-nunito), system-ui, sans-serif;
 }
+
+/* 答錯時的抖動回饋，quiz 元件用 animate-[shake_0.4s_ease-in-out] */
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+/* Sandpack 練習區塊高度：sp-editor/sp-tests 是套件內建的 flex item，
+   flexDirection:column 時預設 flex-basis:0 會把整塊縮成 0px（練習用 preview page
+   已經量過），套件本身沒開放這個高度設定，只能用 !important 蓋掉套件注入的 style。
+   斷點抓常見手機寬度（iPhone SE ~375、Android 小尺寸 ~360）。 */
+.practice-sandbox .sp-editor.sp-stack {
+  height: 320px !important;
+  flex-basis: 320px !important;
+  flex-shrink: 0 !important;
+}
+.practice-sandbox .sp-tests.sp-stack {
+  height: 180px !important;
+  flex-basis: 180px !important;
+  flex-shrink: 0 !important;
+}
+@media (max-width: 640px) {
+  .practice-sandbox .sp-editor.sp-stack {
+    height: 240px !important;
+    flex-basis: 240px !important;
+  }
+  .practice-sandbox .sp-tests.sp-stack {
+    height: 140px !important;
+    flex-basis: 140px !important;
+  }
+}

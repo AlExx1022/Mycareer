@@ -6,7 +6,8 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import type { QuestionData } from "@/lib/lesson-session/units";
-import { QuestionWidget, type Feedback } from "@/app/question-widgets";
+import { withDraftPreview } from "@/lib/draft-preview";
+import { QuestionCard, type Feedback } from "@/app/question-widgets";
 
 gsap.registerPlugin(useGSAP);
 
@@ -25,53 +26,10 @@ function renderWithLinks(text: string) {
   });
 }
 
-// 難度標籤由單元順序推導（考點已依難度遞進排序）：首=基礎、末=深入、中間=進階
-function unitLevel(unit: number, total: number): string | null {
-  if (total < 2) return null;
-  if (unit === 1) return "基礎";
-  if (unit === total && total >= 3) return "深入";
-  return "進階";
-}
-
-function QuestionCard({
-  data,
-  feedback,
-  onAnswer,
-  busy,
-}: {
-  data: QuestionData;
-  feedback: Feedback | null;
-  onAnswer: (a: unknown) => void;
-  busy: boolean;
-}) {
-  const { question: q, progress: p } = data;
-  const level = unitLevel(p.unit, p.totalUnits);
-  return (
-    <div className="mt-6 rounded-lg border border-[#17242D]/15 p-4">
-      <p className="font-mono text-xs text-[#17242D]/45">
-        單元 {p.unit}/{p.totalUnits}
-        {level && (
-          <span className="mx-1 rounded bg-[#17242D]/10 px-1.5 py-0.5">
-            {level}
-          </span>
-        )}
-        ・ 第 {p.question}/{p.totalQuestions} 題
-      </p>
-      <p className="mt-2 text-[15px] whitespace-pre-wrap">{q.prompt}</p>
-      <QuestionWidget q={q} onAnswer={onAnswer} busy={busy} />
-      {feedback && (
-        <p
-          className={`mt-3 rounded-lg px-4 py-2 text-sm ${
-            feedback.correct
-              ? "bg-green-50 text-green-700"
-              : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          {feedback.correct ? "✓ 答對了！" : `✗ 再想想。${feedback.text}`}
-        </p>
-      )}
-    </div>
-  );
+// 答對答錯的短暫等待，讓 QuestionCard 的三態顏色來得及被看到再切下一題
+const FEEDBACK_FLASH_MS = 600;
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function Celebration({
@@ -116,11 +74,13 @@ export default function LessonChat({
   initialMessages,
   passed,
   initialQuestion,
+  previewPathId,
 }: {
   slug: string;
   initialMessages: UIMessage[];
   passed: boolean;
   initialQuestion: QuestionData | null;
+  previewPathId?: string | null;
 }) {
   const [input, setInput] = useState("");
   const [active, setActive] = useState<QuestionData | null>(initialQuestion);
@@ -128,8 +88,13 @@ export default function LessonChat({
   const [celebrating, setCelebrating] = useState<"unit" | "all" | null>(null);
   const [answering, setAnswering] = useState(false);
 
+  const chatApi = withDraftPreview(`/api/lesson/${slug}/chat`, previewPathId);
+  const answerApi = withDraftPreview(
+    `/api/lesson/${slug}/answer`,
+    previewPathId,
+  );
   const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({ api: `/api/lesson/${slug}/chat` }),
+    transport: new DefaultChatTransport({ api: chatApi }),
     messages: initialMessages,
     onData: (part) => {
       if (part.type === "data-question") {
@@ -144,7 +109,7 @@ export default function LessonChat({
     if (!active || answering) return;
     setAnswering(true);
     try {
-      const res = await fetch(`/api/lesson/${slug}/answer`, {
+      const res = await fetch(answerApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ questionId: active.question.id, answer }),
@@ -160,6 +125,8 @@ export default function LessonChat({
       if (!d.correct) {
         setFeedback({ correct: false, text: d.explanation });
       } else if (d.next) {
+        setFeedback({ correct: true, text: "" });
+        await wait(FEEDBACK_FLASH_MS);
         setFeedback(null);
         setActive({ question: d.next, progress: d.progress });
       } else if (d.unitComplete) {

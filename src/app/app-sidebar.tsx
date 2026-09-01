@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/tree", label: "技能樹", emoji: "🗺️" },
+  { href: "/tree", label: "學習路徑", emoji: "🗺️" },
   { href: "/review", label: "今日複習", emoji: "🔥" },
 ];
 
