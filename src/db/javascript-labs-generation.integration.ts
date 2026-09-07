@@ -32,7 +32,10 @@ async function main() {
       (total, file) => total + countTests(file.code),
       0,
     );
-    assert.ok(testCount >= 4, `${lessonId} 生成測試少於四條`);
+    assert.ok(
+      testCount >= 4 && testCount <= 6,
+      `${lessonId} 生成測試必須為 4–6 條，目前 ${testCount} 條`,
+    );
     assert.ok(
       workspace.files.some(
         ({ role, readOnly, path }) =>

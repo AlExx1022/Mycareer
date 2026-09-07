@@ -30,6 +30,15 @@ export function PracticeResultPanel({
         </pre>
       )}
 
+      {result.stdout && (
+        <div className="mt-2">
+          <p className="text-xs font-semibold text-[#17242D]/55">stdout</p>
+          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-[#17242D]/5 p-2 text-xs text-[#17242D]/70">
+            {result.stdout}
+          </pre>
+        </div>
+      )}
+
       {result.diagnostics.length > 0 && (
         <ul className="mt-2 space-y-1 text-xs text-red-700">
           {result.diagnostics.map((diagnostic, index) => (
@@ -86,4 +95,3 @@ export function PracticeEditorControls({
     </button>
   );
 }
-

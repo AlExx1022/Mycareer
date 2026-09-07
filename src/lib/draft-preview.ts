@@ -1,9 +1,5 @@
 export const DRAFT_PREVIEW_QUERY = "preview";
-export const JAVASCRIPT_DRAFT_PREVIEW_PATH_ID = "javascript-interview-core";
-
-const PREVIEWABLE_DRAFT_PATHS = new Set([
-  JAVASCRIPT_DRAFT_PREVIEW_PATH_ID,
-]);
+const PREVIEWABLE_DRAFT_PATHS = new Set<string>();
 
 /** Draft preview is deliberately unavailable in production. */
 export function resolveDraftPreviewPath(

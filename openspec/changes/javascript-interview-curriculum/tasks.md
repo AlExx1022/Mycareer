@@ -23,4 +23,4 @@
 - [x] 4.2 跑 TypeScript、eslint、selfchecks、integration tests 與 production build
 - [x] 4.3 建立僅非 production 可用的 draft 試走入口，並讓 tree、lesson、API、autosave 與下一站連結維持同一 preview scope
 - [x] 4.4 在 draft lesson 加入瀏覽器端試走回饋紀錄與 JSON 匯出，不新增 production 資料或 schema
-- [ ] 4.5 使用者完整走完一個 Unit 並記錄過長、過淺、題目漂移問題；修正後將 path 改為 published，才開始 TypeScript curriculum change
+- [x] 4.5 使用者完整走完一個 Unit 並確認無阻塞問題；將 path 改為 published，解除 TypeScript curriculum change gate

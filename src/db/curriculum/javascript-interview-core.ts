@@ -939,7 +939,7 @@ export const javascriptInterviewCoreCurriculum: CurriculumPath = {
     "建立 JavaScript runtime 心智模型，練習輸出推理、非同步流程與瀏覽器整合面試題。",
   subject: "JavaScript",
   codeLanguage: "JavaScript",
-  status: "draft",
+  status: "published",
   position: 0,
   recommendedPrerequisitePathIds: [],
   defaultPracticeRuntime: "vanilla-js",

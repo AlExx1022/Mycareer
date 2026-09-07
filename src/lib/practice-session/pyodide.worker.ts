@@ -60,6 +60,7 @@ function workspacePath(path: string): string {
 const PYTHON_HARNESS = String.raw`
 import ast
 import importlib
+import io
 import json
 import os
 import sys
@@ -85,8 +86,12 @@ for _path in _all_files:
         })
 
 if not _result["diagnostics"]:
+    _previous_cwd = os.getcwd()
     os.chdir(_workspace_root)
     sys.path.insert(0, _workspace_root)
+    _stdout = io.StringIO()
+    _previous_stdout = sys.stdout
+    sys.stdout = _stdout
     for _path in _all_files:
         if _path.endswith(".py"):
             _module_name = _path.lstrip("/")[:-3].replace("/", ".")
@@ -119,7 +124,7 @@ if not _result["diagnostics"]:
                         _result["tests"].append({
                             "name": _name,
                             "status": "fail",
-                            "message": f"{type(_error).__name__}: {_error}",
+                            "message": "".join(traceback.format_exception(type(_error), _error, _error.__traceback__)).strip(),
                         })
                     continue
 
@@ -133,13 +138,18 @@ if not _result["diagnostics"]:
                     _result["tests"].append({
                         "name": _name,
                         "status": "fail",
-                        "message": f"{type(_error).__name__}: {_error}",
+                        "message": "".join(traceback.format_exception(type(_error), _error, _error.__traceback__)).strip(),
                     })
     except Exception as _error:
-        _result["runtimeError"] = "".join(traceback.format_exception_only(type(_error), _error)).strip()
+        _result["runtimeError"] = "".join(traceback.format_exception(type(_error), _error, _error.__traceback__)).strip()
     finally:
+        sys.stdout = _previous_stdout
+        _captured_stdout = _stdout.getvalue()
+        if _captured_stdout:
+            _result["stdout"] = _captured_stdout
         if sys.path and sys.path[0] == _workspace_root:
             sys.path.pop(0)
+        os.chdir(_previous_cwd)
 
 _result["passed"] = (
     not _result["diagnostics"]

@@ -4,13 +4,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import {
-  getDraftLearningPathForUser,
   getPublishedLearningPathsForUser,
 } from "@/db/queries/skill-tree";
-import {
-  JAVASCRIPT_DRAFT_PREVIEW_PATH_ID,
-  withDraftPreview,
-} from "@/lib/draft-preview";
+import { withDraftPreview } from "@/lib/draft-preview";
 import { SignOutButton } from "../sign-out-button";
 
 export const metadata: Metadata = {
@@ -22,20 +18,8 @@ export default async function LearningPathsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const showDraftPreview = process.env.NODE_ENV !== "production";
-  const [paths, draftPath] = await Promise.all([
-    getPublishedLearningPathsForUser(session.user.id),
-    showDraftPreview
-      ? getDraftLearningPathForUser(
-          session.user.id,
-          JAVASCRIPT_DRAFT_PREVIEW_PATH_ID,
-        )
-      : Promise.resolve(null),
-  ]);
-  const pathCards = [
-    ...(draftPath ? [{ path: draftPath, isDraft: true }] : []),
-    ...paths.map((path) => ({ path, isDraft: false })),
-  ];
+  const paths = await getPublishedLearningPathsForUser(session.user.id);
+  const pathCards = paths.map((path) => ({ path, isDraft: false }));
 
   return (
     <main className="min-h-screen bg-white">

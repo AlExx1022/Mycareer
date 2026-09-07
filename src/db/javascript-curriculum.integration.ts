@@ -22,14 +22,7 @@ const samples = [
 
 async function main() {
   for (const sample of samples) {
-    assert.equal(
-      await getLessonContext(sample.lessonId),
-      null,
-      `${sample.lessonId} 所屬 draft path 不得由一般 lesson query 公開`,
-    );
-    const context = await getLessonContext(sample.lessonId, {
-      includeDraft: true,
-    });
+    const context = await getLessonContext(sample.lessonId);
     assert.ok(context, `找不到 ${sample.lessonId}`);
     assert.equal(context.pathId, "javascript-interview-core");
     assert.equal(context.subject, "JavaScript");

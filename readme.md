@@ -5,7 +5,7 @@
 Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹上點一個節點，AI 教你 → 出題檢核 → 追問到確認真懂 → 掌握度更新，久沒複習的節點會裂開回到複習佇列。
 
 **Demo**：https://mycareer-pi.vercel.app （首頁是專案簡報，可用 demo 帳號一鍵進站，也可自行註冊）
-**狀態**：核心循環與多路徑底座已上線，React Junior → Mid 可完整體驗；JavaScript Interview Core 已完成 draft 課綱與五組 browser runtime 驗收，待完整 Unit 人工試走後發布。TypeScript、Python 課綱接續策展。
+**狀態**：核心循環與多路徑底座已上線，React Junior → Mid、JavaScript Interview Core、TypeScript Frontend Core 與 Python Interview Core 均可完整體驗。
 
 ## 為什麼做
 
@@ -38,7 +38,9 @@ Duolingo 的學習結構 × AI 家教的深度，對象是工程師。技能樹�
 | C6.1 / C6.2 | 視覺打磨（Duolingo 風蜿蜒技能樹、糖果色設計） | ✅ |
 | C6.3 | Landing page（`/` 專案簡報 + demo 一鍵入口，技能樹移至 `/tree`） | ✅ |
 | C7 | 多學習路徑、語言 context、四種 practice runtime | ✅ |
-| JavaScript Interview Core | 5 Unit 課綱、concept rubric、五組 Vanilla JS Interview Lab | 🧪 draft／待 Unit 試走 |
+| JavaScript Interview Core | 5 Unit 課綱、concept rubric、五組 Vanilla JS Interview Lab | ✅ published |
+| TypeScript Frontend Core | 3 Unit 課綱、strict compile gate、三組 TypeScript Interview Lab | ✅ published |
+| Python Interview Core | 4 Unit 課綱、五組 Pyodide Lab、typed/tested CLI capstone | ✅ published |
 
 開發階段的完整編排見 [`roadmap.md`](roadmap.md)，規格與變更提案在 [`openspec/`](openspec/)。
 
@@ -102,7 +104,7 @@ START ─┬─ teach    ──→ END          小單元做完，開場收尾�
 | 動畫 | GSAP |
 | 部署 | Vercel 單一服務 |
 
-所有使用者程式碼只在瀏覽器 sandbox 或 Web Worker 執行，application server 不 eval。Practice session 保存 versioned multi-file workspace；舊 React 三件套與 `user_code` 仍可續作。
+所有使用者程式碼只在瀏覽器 sandbox 或 Web Worker 執行，application server 不 eval。Python practice 僅允許可攜純 Python、標準函式庫與 workspace module；socket、subprocess、外部 network 與 native-only package 會在出題驗證被拒絕。Pyodide worker 逾時會終止重建，UI 會分別呈現 stdout、完整 traceback 與逐條測試。Practice session 保存 versioned multi-file workspace；舊 React 三件套與 `user_code` 仍可續作。
 
 ## 本地開發
 
@@ -122,10 +124,21 @@ npm run dev
 ```bash
 npm test        # 純邏輯 self-check：技能樹佈局與解鎖、掌握度衰減、複習佇列
 npm run test:db # 需要真 DB 的檢查：LLM 每日額度（會寫入再自行清除）
-npm run test:javascript-curriculum # JavaScript draft context／rubric DB integration
+npm run test:javascript-curriculum # JavaScript published context／rubric DB integration
 npm run test:javascript-generation # 五個 Lab 真實 AI 生成 contract（會呼叫 LLM）
+npm run test:typescript-curriculum # TypeScript 3／18／15／3 與 compile/runtime 邊界 selfcheck
+npm run test:typescript-compile-gate # 三個 Lab strict compiler fixtures
+npm run test:typescript-curriculum-integration # TypeScript published context／tree／prompt DB integration
+npm run test:typescript-generation # 三個 Lab 真實 AI 生成 contract（會呼叫 LLM）
+npm run test:python-curriculum # Python 4／22／17／5、DAG 與 capstone contract selfcheck
+npm run test:python-runtime-curriculum # 五個 Lab workspace、runtime 白名單與 autosave/resume
+npm run test:python-curriculum-integration # Python published context／tree／prompt DB integration
+npm run test:python-generation # 五個 Lab 真實 AI 生成 contract（會呼叫 LLM）
+PYTHONPATH=fixtures/python-skill-gap-cli/src python3.11 -m pytest fixtures/python-skill-gap-cli/tests -q
 npm run lint
 npx tsc --noEmit
 ```
+
+`fixtures/python-skill-gap-cli` 是 capstone 的本機交付 gate：使用 Python 3.11+ 的隔離環境安裝專案與 test dependency group，再執行 pytest。browser Lab 只驗證可攜 pure core，不代表本機 package installation、filesystem 或 console entry point 已通過。
 
 核心規則以 `src/lib/*.selfcheck.ts` 的斷言守住——解鎖要求前置全亮、裂開節點不鎖下游、分支廊道不超出畫布、衰減曲線與門檻、複習佇列排序。CI（`.github/workflows/ci.yml`）在每次 push 與 PR 跑 lint、型別檢查、`npm test` 與 build。

@@ -99,7 +99,7 @@ const javascriptConcepts = javascriptLessons.filter(
 const javascriptPractices = javascriptLessons.filter(
   (curriculumLesson) => curriculumLesson.type === "practice",
 );
-assert.equal(javascriptCurriculum.status, "draft");
+assert.equal(javascriptCurriculum.status, "published");
 assert.equal(javascriptCurriculum.position, 0);
 assert.equal(javascriptCurriculum.subject, "JavaScript");
 assert.equal(javascriptCurriculum.codeLanguage, "JavaScript");

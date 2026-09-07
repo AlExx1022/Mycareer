@@ -731,7 +731,7 @@ export const reactJuniorMidCurriculum: CurriculumPath = {
   subject: "React",
   codeLanguage: "TypeScript",
   status: "published",
-  position: 1,
+  position: 2,
   recommendedPrerequisitePathIds: ["javascript-interview-core"],
   units,
 };

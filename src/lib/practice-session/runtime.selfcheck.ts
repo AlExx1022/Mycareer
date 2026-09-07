@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { PRACTICE_RUNTIME_FIXTURES } from "./fixtures";
 import { JAVASCRIPT_LAB_FIXTURES } from "./javascript-lab-fixtures";
+import { TYPESCRIPT_LAB_FIXTURES } from "./typescript-lab-fixtures";
 import { PyodidePracticeRunner, type WorkerLike } from "./python-runner";
 import {
   normalizeSandpackResult,
@@ -75,6 +76,40 @@ for (const fixture of JAVASCRIPT_LAB_FIXTURES) {
     validatePracticeWorkspace(fixture.workspace, "vanilla-js"),
     [],
     `${fixture.lessonId} fixture 應符合 vanilla-js workspace contract`,
+  );
+}
+
+assert.equal(TYPESCRIPT_LAB_FIXTURES.length, 3);
+for (const fixture of TYPESCRIPT_LAB_FIXTURES) {
+  assert.deepEqual(
+    validatePracticeWorkspace(fixture.workspace, fixture.runtime),
+    [],
+    `${fixture.lessonId} fixture 應符合 ${fixture.runtime} workspace contract`,
+  );
+  const resumed = normalizePracticeWorkspace(fixture.workspace, {
+    userFiles: fixture.validUserFiles,
+  });
+  assert.deepEqual(
+    resumed.userFiles,
+    fixture.validUserFiles,
+    `${fixture.lessonId} resume 應還原所有可編輯檔案`,
+  );
+  assert.deepEqual(
+    sanitizeEditableUserFiles(fixture.workspace, resumed.userFiles),
+    fixture.validUserFiles,
+    `${fixture.lessonId} autosave payload 應通過白名單過濾`,
+  );
+  const readOnlyPath = fixture.workspace.files.find(
+    ({ readOnly }) => readOnly,
+  )?.path;
+  assert.ok(readOnlyPath, `${fixture.lessonId} 應包含唯讀測試檔`);
+  assert.equal(
+    sanitizeEditableUserFiles(fixture.workspace, {
+      ...resumed.userFiles,
+      [readOnlyPath]: "竄改測試",
+    }),
+    null,
+    `${fixture.lessonId} autosave 不得覆寫唯讀測試檔`,
   );
 }
 

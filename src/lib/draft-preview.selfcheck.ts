@@ -7,23 +7,23 @@ import {
 
 assert.equal(
   resolveDraftPreviewPath(
-    "javascript-interview-core",
+    "python-interview-core",
     undefined,
     "development",
   ),
-  "javascript-interview-core",
+  null,
 );
 assert.equal(
   resolveDraftPreviewPath(
-    "javascript-interview-core",
-    "javascript-interview-core",
+    "python-interview-core",
+    "python-interview-core",
     "development",
   ),
-  "javascript-interview-core",
+  null,
 );
 assert.equal(
   resolveDraftPreviewPath(
-    "javascript-interview-core",
+    "python-interview-core",
     "react-junior-mid",
     "development",
   ),
@@ -35,23 +35,23 @@ assert.equal(
 );
 assert.equal(
   resolveDraftPreviewPath(
-    ["javascript-interview-core"],
+    ["python-interview-core"],
     undefined,
     "development",
   ),
   null,
 );
 assert.equal(
-  withDraftPreview("/lesson/example", "javascript-interview-core"),
-  "/lesson/example?preview=javascript-interview-core",
+  withDraftPreview("/lesson/example", "python-interview-core"),
+  "/lesson/example?preview=python-interview-core",
 );
 assert.equal(
-  withDraftPreview("/lesson/example?source=tree", "javascript-interview-core"),
-  "/lesson/example?source=tree&preview=javascript-interview-core",
+  withDraftPreview("/lesson/example?source=tree", "python-interview-core"),
+  "/lesson/example?source=tree&preview=python-interview-core",
 );
 assert.equal(
   resolveDraftPreviewPath(
-    "javascript-interview-core",
+    "python-interview-core",
     undefined,
     "production",
   ),
@@ -61,9 +61,9 @@ assert.equal(
 // URL parser follows the process environment; the test runner is non-production.
 assert.equal(
   draftPreviewPathFromUrl(
-    "http://localhost/lesson/example?preview=javascript-interview-core",
+    "http://localhost/lesson/example?preview=python-interview-core",
   ),
-  "javascript-interview-core",
+  null,
 );
 
 console.log("draft preview selfcheck OK");

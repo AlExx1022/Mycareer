@@ -1,6 +1,12 @@
 // self-check：npx tsx src/lib/practice-session/llm.selfcheck.ts（純 schema 驗證，不打 LLM）
 import assert from "node:assert";
-import { exerciseSchema, reviewSchema, looksCorrupted } from "./llm";
+import {
+  countGeneratedTests,
+  exerciseSchema,
+  reviewSchema,
+  looksCorrupted,
+  pythonRuntimeValidationErrors,
+} from "./llm";
 
 const exercise = exerciseSchema.safeParse({
   version: 2,
@@ -22,6 +28,44 @@ const exercise = exerciseSchema.safeParse({
   ],
 });
 assert.ok(exercise.success, "合法 exercise 應通過");
+if (exercise.success) {
+  assert.equal(countGeneratedTests(exercise.data, "vanilla-ts"), 1);
+}
+
+const pythonExercise = exerciseSchema.parse({
+  version: 2,
+  description: "Python fixture",
+  entryFile: "/main.py",
+  files: [
+    { path: "/main.py", code: "def run(): pass", role: "starter", readOnly: false },
+    {
+      path: "/test_main.py",
+      code: "def test_one(): pass\n\ndef test_two(): pass\n",
+      role: "test",
+      readOnly: true,
+    },
+  ],
+});
+assert.equal(countGeneratedTests(pythonExercise, "python"), 2);
+assert.deepEqual(pythonRuntimeValidationErrors(pythonExercise), []);
+
+const unsupportedPythonExercise = exerciseSchema.parse({
+  ...pythonExercise,
+  files: [
+    {
+      path: "/main.py",
+      code: "import socket\nimport json, pandas\nfrom urllib.request import urlopen",
+      role: "starter",
+      readOnly: false,
+    },
+    pythonExercise.files[1],
+  ],
+});
+assert.deepEqual(pythonRuntimeValidationErrors(unsupportedPythonExercise), [
+  "Python browser runtime 不支援 socket",
+  "Python browser runtime 不支援 外部 network",
+  "Python browser runtime 僅允許標準函式庫或 workspace module：pandas",
+]);
 
 assert.ok(
   !exerciseSchema.safeParse({ description: "缺起始碼與測試" }).success,

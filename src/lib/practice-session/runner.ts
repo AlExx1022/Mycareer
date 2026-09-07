@@ -21,6 +21,7 @@ export type PracticeRunnerResult = {
   tests: PracticeTestResult[];
   diagnostics: PracticeDiagnostic[];
   runtimeError?: string;
+  stdout?: string;
 };
 
 export type PracticeRunnerProps = {

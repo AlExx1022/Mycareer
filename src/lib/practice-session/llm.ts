@@ -71,6 +71,130 @@ function isExerciseCorrupted(exercise: PracticeWorkspace): boolean {
   );
 }
 
+export function countGeneratedTests(
+  exercise: PracticeWorkspace,
+  runtime: PracticeRuntime,
+): number {
+  const testCode = exercise.files
+    .filter(({ role }) => role === "test")
+    .map(({ code }) => code)
+    .join("\n");
+  return runtime === "python"
+    ? [...testCode.matchAll(/^\s*def\s+test_[A-Za-z0-9_]+\s*\(/gm)].length
+    : [...testCode.matchAll(/\b(?:it|test)\s*\(/g)].length;
+}
+
+const PYTHON_STDLIB_IMPORTS = new Set([
+  "__future__",
+  "abc",
+  "argparse",
+  "ast",
+  "collections",
+  "contextlib",
+  "csv",
+  "dataclasses",
+  "datetime",
+  "decimal",
+  "enum",
+  "functools",
+  "hashlib",
+  "io",
+  "itertools",
+  "json",
+  "math",
+  "operator",
+  "pathlib",
+  "re",
+  "statistics",
+  "string",
+  "textwrap",
+  "time",
+  "typing",
+  "types",
+  "unittest",
+]);
+
+const PYTHON_BLOCKED_CAPABILITIES = [
+  { pattern: /\b(?:from|import)\s+socket\b/m, label: "socket" },
+  { pattern: /\b(?:from|import)\s+subprocess\b/m, label: "subprocess" },
+  { pattern: /\b(?:from|import)\s+(?:urllib\.request|http\.client)\b/m, label: "外部 network" },
+  { pattern: /\b(?:micropip|pyodide\.http)\b/m, label: "runtime package/network loader" },
+] as const;
+const PYTHON_BLOCKED_IMPORT_ROOTS = new Set([
+  "http",
+  "micropip",
+  "pyodide",
+  "socket",
+  "subprocess",
+  "urllib",
+]);
+
+export function pythonRuntimeValidationErrors(
+  exercise: PracticeWorkspace,
+): string[] {
+  const errors: string[] = [];
+  const pythonCode = exercise.files
+    .filter(({ path }) => path.endsWith(".py"))
+    .map(({ code }) => code)
+    .join("\n");
+  const localModules = new Set(
+    exercise.files
+      .filter(({ path }) => path.endsWith(".py"))
+      .flatMap(({ path }) => {
+        const segments = path.slice(1, -3).split("/");
+        return [segments[0], segments.at(-1)].filter(
+          (value): value is string => Boolean(value && value !== "__init__"),
+        );
+      }),
+  );
+
+  for (const blocked of PYTHON_BLOCKED_CAPABILITIES) {
+    if (blocked.pattern.test(pythonCode)) {
+      errors.push(`Python browser runtime 不支援 ${blocked.label}`);
+    }
+  }
+
+  const importedRoots = new Set<string>();
+  for (const line of pythonCode.split("\n")) {
+    const fromImport = line.match(/^\s*from\s+([A-Za-z_][\w.]*)\s+import\b/);
+    if (fromImport) importedRoots.add(fromImport[1].split(".")[0]);
+
+    const directImport = line.match(/^\s*import\s+(.+?)\s*(?:#.*)?$/);
+    for (const item of directImport?.[1].split(",") ?? []) {
+      const moduleName = item.trim().split(/\s+as\s+/, 1)[0];
+      const root = moduleName.split(".")[0];
+      if (root) importedRoots.add(root);
+    }
+  }
+
+  for (const root of importedRoots) {
+    if (
+      !PYTHON_BLOCKED_IMPORT_ROOTS.has(root) &&
+      !PYTHON_STDLIB_IMPORTS.has(root) &&
+      !localModules.has(root)
+    ) {
+      errors.push(`Python browser runtime 僅允許標準函式庫或 workspace module：${root}`);
+    }
+  }
+
+  return [...new Set(errors)];
+}
+
+function generationValidationErrors(
+  exercise: PracticeWorkspace,
+  runtime: PracticeRuntime,
+): string[] {
+  const errors = validatePracticeWorkspace(exercise, runtime);
+  const testCount = countGeneratedTests(exercise, runtime);
+  if (testCount < 4 || testCount > 6) {
+    errors.push(`生成測試必須為 4–6 條，目前為 ${testCount} 條`);
+  }
+  if (runtime === "python") {
+    errors.push(...pythonRuntimeValidationErrors(exercise));
+  }
+  return errors;
+}
+
 function requirePracticeContext(
   lesson: LessonContext,
 ): CompletePracticeContext {
@@ -105,6 +229,15 @@ function runtimeInstructions(runtime: PracticeRuntime): string {
   }
 }
 
+function reviewInstructions(runtime: PracticeRuntime): string {
+  if (runtime !== "python") {
+    return `- 依 ${runtime} runtime 的語言與 framework 慣例 review。`;
+  }
+  return `- 只依 Python 語意與慣例 review：name binding、iterator/generator、exception boundary、type hints 的 runtime 限制與資料結構 Big-O。
+- 不提供 React、TypeScript 或前端 framework 建議；不要把 type annotation 當 runtime validation。
+- 若解答使用 socket、subprocess、外部 network、第三方或 native-only package，必須判 fail。`;
+}
+
 function blueprintPrompt(blueprint: PracticeBlueprint): string {
   return `核心目標：${blueprint.objective}
 
@@ -125,13 +258,13 @@ export async function generateExercise(
 ): Promise<PracticeWorkspace> {
   const lesson = requirePracticeContext(lessonContext);
   let exercise = await generate(lesson);
-  let validationErrors = validatePracticeWorkspace(
+  let validationErrors = generationValidationErrors(
     exercise,
     lesson.practiceRuntime,
   );
   if (isExerciseCorrupted(exercise) || validationErrors.length > 0) {
     exercise = await generate(lesson);
-    validationErrors = validatePracticeWorkspace(
+    validationErrors = generationValidationErrors(
       exercise,
       lesson.practiceRuntime,
     );
@@ -216,6 +349,9 @@ ${renderWorkspaceForReview(workspace, userFiles, lesson.codeLanguage)}
 
 驗收標準：
 ${lesson.rubric.map((item) => `- ${item.criterion}：${item.passCondition}`).join("\n")}
+
+Runtime review 規則：
+${reviewInstructions(lesson.practiceRuntime)}
 
 任務：
 1. 依 ${lesson.codeLanguage} 慣例與 blueprint 判定 verdict。空殼、硬編測資、偏離 objective、漏 requirement/edge case 一律 fail。

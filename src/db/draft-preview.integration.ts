@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
 const BASE_URL = process.env.INTEGRATION_BASE_URL ?? "http://localhost:3000";
-const PATH_ID = "javascript-interview-core";
-const FIRST_LESSON_ID = "js-runtime-values-types";
+const PATH_ID = "python-interview-core";
+const FIRST_LESSON_ID = "py-syntax-truthiness-control-flow";
 const PREVIEW_QUERY = `preview=${PATH_ID}`;
 
 async function signInCookie() {
@@ -53,17 +53,24 @@ async function main() {
   assert.equal(catalog.status, 200);
   const catalogHtml = await catalog.text();
   assert.ok(
-    catalogHtml.includes("JavaScript Interview Core"),
-    "development tree 目錄缺少 draft 卡片",
+    catalogHtml.includes("Python Interview Core"),
+    "development tree 目錄缺少 published 卡片",
   );
-  assert.ok(catalogHtml.includes("DRAFT 試走"), "draft 卡片缺少狀態標記");
   assert.ok(
-    catalogHtml.includes(`/tree/${PATH_ID}?${PREVIEW_QUERY}`),
-    "draft 卡片連結未攜帶 preview scope",
+    !catalogHtml.includes("DRAFT 試走"),
+    "published 目錄不得顯示 draft 標記",
+  );
+  assert.ok(
+    catalogHtml.includes(`/tree/${PATH_ID}`),
+    "published 卡片缺少正常路徑連結",
+  );
+  assert.ok(
+    !catalogHtml.includes(`/tree/${PATH_ID}?${PREVIEW_QUERY}`),
+    "published 卡片不得攜帶 preview scope",
   );
 
-  const hiddenTree = await get(`/tree/${PATH_ID}`, cookie);
-  assert.equal(hiddenTree.status, 404, "draft tree 不得由一般 URL 公開");
+  const publishedTree = await get(`/tree/${PATH_ID}`, cookie);
+  assert.equal(publishedTree.status, 200, "published tree 應可由一般 URL 存取");
 
   const previewTree = await get(
     `/tree/${PATH_ID}?${PREVIEW_QUERY}`,
@@ -72,15 +79,25 @@ async function main() {
   assert.equal(previewTree.status, 200);
   const treeHtml = await previewTree.text();
   assert.ok(
-    treeHtml.includes("JavaScript Interview Core"),
-    "preview tree 缺少路徑標題",
+    treeHtml.includes("Python Interview Core"),
+    "stale-preview tree 缺少路徑標題",
   );
-  assert.ok(treeHtml.includes("Draft 試走模式"), "preview tree 缺少模式提示");
-  assert.ok(treeHtml.includes(FIRST_LESSON_ID), "preview tree 缺少第一個節點");
-  assert.ok(treeHtml.includes(PREVIEW_QUERY), "preview tree 未保留 preview scope");
+  assert.ok(
+    !treeHtml.includes("Draft 試走模式"),
+    "stale preview 不得將 published tree 標成 draft",
+  );
+  assert.ok(treeHtml.includes(FIRST_LESSON_ID), "published tree 缺少第一個節點");
+  assert.ok(
+    !treeHtml.includes(`/lesson/${FIRST_LESSON_ID}?${PREVIEW_QUERY}`),
+    "stale preview 不得傳播到 tree 內部連結",
+  );
 
-  const hiddenLesson = await get(`/lesson/${FIRST_LESSON_ID}`, cookie);
-  assert.equal(hiddenLesson.status, 404, "draft lesson 不得由一般 URL 公開");
+  const publishedLesson = await get(`/lesson/${FIRST_LESSON_ID}`, cookie);
+  assert.equal(
+    publishedLesson.status,
+    200,
+    "published lesson 應可由一般 URL 存取",
+  );
 
   const previewLesson = await get(
     `/lesson/${FIRST_LESSON_ID}?${PREVIEW_QUERY}`,
@@ -89,21 +106,28 @@ async function main() {
   assert.equal(previewLesson.status, 200);
   const lessonHtml = await previewLesson.text();
   assert.ok(
-    lessonHtml.includes("JavaScript runtime、值與型別"),
-    "preview lesson 缺少課程標題",
+    lessonHtml.includes("Python 語法、Truthiness 與控制流程"),
+    "stale-preview lesson 缺少課程標題",
   );
   assert.ok(
-    lessonHtml.includes("Draft 試走模式"),
-    "preview lesson 缺少模式提示",
+    !lessonHtml.includes("Draft 試走模式"),
+    "stale preview 不得將 published lesson 標成 draft",
   );
-  assert.ok(lessonHtml.includes(PREVIEW_QUERY), "lesson 未保留 preview scope");
+  assert.ok(
+    !lessonHtml.includes(`/tree/${PATH_ID}?${PREVIEW_QUERY}`),
+    "stale preview 不得傳播到 lesson 內部連結",
+  );
 
-  const hiddenAnswer = await post(
+  const publishedAnswer = await post(
     `/api/lesson/${FIRST_LESSON_ID}/answer`,
     cookie,
     {},
   );
-  assert.equal(hiddenAnswer.status, 404, "draft API 不得由一般 URL 存取");
+  assert.equal(
+    publishedAnswer.status,
+    400,
+    "published API 應通過路徑 guard，並停在尚無作答 session 的驗證",
+  );
 
   const previewAnswer = await post(
     `/api/lesson/${FIRST_LESSON_ID}/answer?${PREVIEW_QUERY}`,
@@ -112,11 +136,11 @@ async function main() {
   );
   assert.equal(
     previewAnswer.status,
-    400,
-    "preview API 應通過 draft guard，並停在尚無作答 session 的驗證",
+    publishedAnswer.status,
+    "stale preview 不得改變 published API 的存取結果",
   );
 
-  console.log("draft preview development integration OK");
+  console.log("published path stale-preview integration OK");
 }
 
 main().catch((error: unknown) => {
