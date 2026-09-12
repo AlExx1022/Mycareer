@@ -44,8 +44,12 @@ const reactCurriculum = curricula.find(({ id }) => id === "react-junior-mid");
 const javascriptCurriculum = curricula.find(
   ({ id }) => id === "javascript-interview-core",
 );
+const javascriptReactCurriculum = curricula.find(
+  ({ id }) => id === "javascript-react-interview-core",
+);
 assert.ok(reactCurriculum);
 assert.ok(javascriptCurriculum);
+assert.ok(javascriptReactCurriculum);
 assert.deepEqual(
   reactCurriculum.units.map((curriculumUnit) => curriculumUnit.slug),
   ["react-core-model", "hooks-and-data-flow"],
@@ -144,6 +148,60 @@ assert.deepEqual(
 assert.deepEqual(reactCurriculum.recommendedPrerequisitePathIds, [
   javascriptCurriculum.id,
 ]);
+
+const javascriptReactLessons = javascriptReactCurriculum.units.flatMap(
+  (curriculumUnit) => curriculumUnit.lessons,
+);
+assert.equal(javascriptReactCurriculum.status, "published");
+assert.equal(javascriptReactCurriculum.position, 4);
+assert.deepEqual(javascriptReactCurriculum.recommendedPrerequisitePathIds, []);
+assert.equal(javascriptReactLessons.length, 26);
+assert.ok(
+  javascriptReactLessons.every(
+    (curriculumLesson) =>
+      curriculumLesson.type === "concept" &&
+      curriculumLesson.dependsOn.length === 0,
+  ),
+  "JavaScript & React Interview Core 必須全為零前置概念節點",
+);
+assert.deepEqual(
+  javascriptReactLessons.map(({ slug }) => slug),
+  [
+    "jrc-js-data-types",
+    "jrc-js-equality",
+    "jrc-js-null-undefined-undeclared",
+    "jrc-js-var-let-const",
+    "jrc-js-scope-chain",
+    "jrc-js-hoisting-tdz",
+    "jrc-js-closure",
+    "jrc-js-this",
+    "jrc-js-arrow-functions",
+    "jrc-js-prototype-chain",
+    "jrc-js-new-operator",
+    "jrc-js-array-iteration",
+    "jrc-js-shallow-deep-copy",
+    "jrc-js-map-object-set",
+    "jrc-js-promise",
+    "jrc-js-async-await",
+    "jrc-js-event-loop",
+    "jrc-react-props-state",
+    "jrc-react-state-immutability",
+    "jrc-react-rerender-conditions",
+    "jrc-react-keys",
+    "jrc-react-controlled-components",
+    "jrc-react-use-effect",
+    "jrc-react-dependency-array",
+    "jrc-react-stale-closure",
+    "jrc-react-usememo-usecallback",
+  ],
+);
+for (const curriculumLesson of javascriptReactLessons) {
+  assert.ok(
+    curriculumLesson.examPoints.length >= 2 &&
+      curriculumLesson.examPoints.length <= 3,
+  );
+  assert.ok(curriculumLesson.rubric.length >= 2);
+}
 
 for (const [index, curriculumLesson] of javascriptLessons.entries()) {
   assert.deepEqual(
